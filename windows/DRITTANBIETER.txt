@@ -1,0 +1,54 @@
+Drittanbieter-Komponenten im Windows-Paket von beo-tool
+===========================================================
+
+Das Programm beo-tool selbst steht unter der MIT-Lizenz (siehe LIZENZ.txt).
+Das Windows-Paket enthält zusätzlich folgende Komponenten anderer Hersteller:
+
+
+1. Java-Laufzeit (Ordner runtime\)
+-----------------------------------
+Eclipse Temurin (OpenJDK) 21, verkleinert mit jlink.
+Lizenz: GNU General Public License Version 2 mit "Classpath Exception".
+Die vollständigen Lizenztexte und Hinweise liegen im Ordner runtime\legal\.
+Quelltext: https://github.com/adoptium/temurin21-binaries und https://openjdk.org
+
+
+2. Go-Laufzeit (in beo-tool.exe und beo-tool-konsole.exe)
+--------------------------------------------------------------
+Die beiden Startprogramme sind in der Programmiersprache Go geschrieben und
+enthalten Teile der Go-Standardbibliothek. Diese steht unter folgender Lizenz:
+
+Copyright 2009 The Go Authors.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google LLC nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Hinweis zu NEPTAN und Jag3D
+---------------------------
+beo-tool ist ein eigenständiges, unabhängig entwickeltes Programm. NEPTAN und Jag3D
+sind Produkte ihrer jeweiligen Hersteller; die Namen werden nur verwendet, um die
+Dateiformate zu beschreiben. Es besteht keine Verbindung zu diesen Herstellern.

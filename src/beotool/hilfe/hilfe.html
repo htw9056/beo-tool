@@ -1,0 +1,180 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<title>@VERSION@ – Handbuch</title>
+<style>
+body { font-family: sans-serif; font-size: 12pt; margin: 16px; }
+h1 { font-size: 18pt; color: #164a80; }
+h2 { font-size: 14pt; color: #164a80; margin-top: 18px; }
+h3 { font-size: 12pt; }
+td, th { font-size: 11pt; padding: 2px 8px 2px 0; vertical-align: top; text-align: left; }
+code, pre { font-family: monospace; font-size: 11pt; }
+.klein { color: #555555; font-size: 10pt; }
+</style>
+</head>
+<body>
+<h1>@VERSION@ – Handbuch</h1>
+<p>© Dipl.-Ing. (FH) Stefan Klein &middot; MIT-Lizenz &middot;
+Fragen und Hinweise ausschließlich über das Forum:
+<a href="https://github.com/htw9056/beo-tool/discussions">github.com/htw9056/beo-tool/discussions</a></p>
+
+<p><b>Inhalt:</b>
+<a href="#zweck">Zweck</a> &middot;
+<a href="#ablauf">Ablauf</a> &middot;
+<a href="#eingabe">Eingabedaten</a> &middot;
+<a href="#reduktion">Reduktion</a> &middot;
+<a href="#vereinigung">Standpunktvereinigung</a> &middot;
+<a href="#anzahl">Anzahl Anzielungen</a> &middot;
+<a href="#ausgabe">Ausgabedateien</a> &middot;
+<a href="#konsole">Konsole</a></p>
+
+<h2><a name="zweck">Zweck</a></h2>
+<p>beo-tool bereitet tachymetrische Messungen aus NEPTAN-Beobachtungsdateien (*.beo) und
+Nivellementdaten (Leica GSI, Trimble DAT) für die Netzausgleichung mit <b>Jag3D</b> auf:</p>
+<ul>
+<li>Reduktion der Messwerte je Standpunkt (Mittel aus Lagen und Sätzen mit Ausreißerelimination)</li>
+<li>Standpunktvereinigung gleichnamiger Standpunkte</li>
+<li>Anzahl der Anzielungen je Punkt</li>
+<li>Ausgabe der reduzierten Beobachtungen sowie der Fest- und Neupunkte für 1D, 2D oder 3D</li>
+</ul>
+<p>Das Programm ersetzt das Excel-Werkzeug „Konvertierung für Jag3D“ und schreibt dieselben Dateien.</p>
+
+<h2><a name="ablauf">Ablauf</a></h2>
+<ol>
+<li>Messdateien hinzufügen (Schaltfläche, Menü Datei oder Dateien in das Fenster ziehen).
+Das Format wird aus der Dateiendung übernommen. Mehrere Dateien werden nacheinander gelesen.</li>
+<li>Festpunktdateien hinzufügen (optional).</li>
+<li>Ausgleichungsart wählen: <code>1D_(Höhe)</code>, <code>2D_(Lage)</code> oder <code>3D_(Lage&amp;Höhe)</code>.</li>
+<li>Sonderfunktionen und Grenzwerte prüfen.</li>
+<li><b>Berechnen und Dateien schreiben</b> (F5). Die Ergebnisse stehen in den Registern rechts,
+die Dateien im Ausgabeordner (leer = Ordner der ersten Messdatei).</li>
+</ol>
+<p>Alle Einstellungen werden beim Beenden und vor jeder Berechnung gespeichert
+(<code>%APPDATA%\beo-tool\einstellungen.properties</code>).</p>
+
+<h2><a name="eingabe">Eingabedaten</a></h2>
+<h3>NEPTAN-Beobachtungsdatei (*.beo)</h3>
+<p>Feste Spalten nach NEPTAN-Handbuch, Anhang A 6.1.1. Ausgewertet werden die Satzarten
+<code>10.</code> (Standpunkt, Instrumentenhöhe in Spalte 81–95) und <code>20.</code> (Zielpunkt mit
+Schrägstrecke, Richtung, Zenitdistanz und Reflektorhöhe). Lage II wird an der Zenitdistanz &gt; 200 gon
+erkannt. Zeilen mit Abschaltkennzeichen in Spalte 1 oder anderer Satzart (z. B. <code>20</code> ohne Punkt)
+werden nicht verwendet. Fehlende Werte sind Leerzeichen oder <code>-1000.</code>.</p>
+<p><b>Prüfung Hauptpolygonzug:</b> Es bleiben nur Beobachtungen zu Punkten, die selbst Standpunkt sind.
+Standpunkte ohne solche Beobachtung entfallen. Die Dateinamen erhalten den Zusatz
+<code>_Pruefung_Hauptpolygon</code>.</p>
+
+<h3>Nivellement: Leica GSI-8/GSI-16 und Trimble DAT (M5)</h3>
+<p>GSI: Wortindizes 11 (Punktnummer), 32 (Zielweite), 331/335 (Rückblick), 332/336 (Vorblick),
+333/334 (Zwischenblick); Einheit aus der Wortinformation (mm, 1/10 mm, 1/100 mm).
+DAT: Lr/Rb (Rückblick), Lv/Rf (Vorblick), Lz/Rz (Zwischenblick), HD (Zielweite).</p>
+<p>Jeder Rückblick beginnt eine neue Aufstellung mit dem Namen <code>nnnn_Rückblickpunkt</code>
+(Zähler ab „Beginn Zählernummer“, vierstellig). Ein zweiter Rückblick auf denselben Punkt nach einem
+Vorblick (Verfahren RVVR) gehört zur selben Aufstellung. Die Lattenablesung wird wie ein
+Höhenunterschied, die Zielweite wie eine Strecke behandelt; Wiederholungsablesungen werden gemittelt.
+Optional werden negative Zwischenblicke und führende Nullen der Punktnummern gelöscht.</p>
+
+<h3>Festpunktdatei (*.pkt)</h3>
+<p>Je Zeile <code>Punktnummer Rechtswert Hochwert Höhe</code>, getrennt durch Leerzeichen
+(z. B. NEPTAN BTFEST.PKT). Kopfzeilen werden übergangen, <code>-1000</code> bedeutet „kein Wert“.
+Für reine Höhenfestpunkte genügt <code>Punktnummer Höhe</code>.</p>
+
+<h2><a name="reduktion">Reduktion von Messwerten</a></h2>
+<p>Für jedes Ziel eines Standpunktes:</p>
+<ol>
+<li>Lage II auf Lage I: Richtung ± 200 gon.</li>
+<li>Horizontalstrecke <code>s · sin z</code>, Höhenunterschied
+<code>s · cos z − Reflektorhöhe + Instrumentenhöhe</code> (von Punkt zu Punkt). Fehlt die Zenitdistanz,
+wird die Strecke unverändert übernommen („keine Horizontalstrecke!“).</li>
+<li>Richtungen beiderseits von 0/400 gon werden in einen gemeinsamen Bereich gelegt.</li>
+<li><b>Zielachsfehler:</b> c = (Mittel Lage II − Mittel Lage I) / 2 wird an den Einzelrichtungen
+angebracht (Lage I + c, Lage II − c). Das Richtungsmittel ändert sich nicht, aber beide Lagen werden
+gleichgestellt. Ohne diesen Schritt würde bei einem Zielachsfehler größer als der Grenzwert eine
+ganze Fernrohrlage eliminiert. Abschaltbar unter Sonderfunktionen.</li>
+<li>Je Messelement (Richtung, Strecke, Höhenunterschied) wird der Einzelwert mit der größten
+Abweichung vom Mittel eliminiert, solange diese den Grenzwert erreicht oder überschreitet.</li>
+<li>Mittel der verbleibenden Werte: Richtung 5, Strecke und Höhenunterschied 4 Nachkommastellen
+(Nivellement 6). Gerundet wird kaufmännisch wie in Excel.</li>
+</ol>
+<table>
+<tr><th>Grenzwert</th><th>Vorgabe</th></tr>
+<tr><td>Richtungsdifferenz</td><td>0.0015 gon</td></tr>
+<tr><td>Streckendifferenz</td><td>0.0007 m</td></tr>
+<tr><td>Höhenunterschieddifferenz</td><td>0.100 m (Nivellement 0.00005 m)</td></tr>
+</table>
+<p>Das Protokoll <code>JAGRED.OutR</code> zeigt je Ziel das Mittel, die Anzahl der verwendeten
+Messungen (R/S/H) und alle Einzelwerte mit DIFF = Mittel − Einzelwert; eliminierte Werte sind mit
+<code>***</code> markiert.</p>
+
+<h2><a name="vereinigung">Standpunktvereinigung</a></h2>
+<p>Kommt ein Standpunkt mehrfach vor, werden die weiteren Aufstellungen in die erste übernommen:</p>
+<ol>
+<li>Orientierungsunterschied OU = Mittel der Richtungsdifferenzen (erste − weitere Aufstellung) aller
+gemeinsamen Ziele. Das Ziel mit der größten Abweichung vom OU wird ausgeschlossen, solange diese den
+Grenzwert überschreitet.</li>
+<li>Gemeinsame Ziele werden gemittelt, gewichtet nach der Anzahl der bereits vereinigten
+Aufstellungen (die dritte Aufstellung zählt ein Drittel). Fehlt ein Wert in einer Aufstellung, wird der
+vorhandene übernommen, er wird nicht mit 0 gemittelt. Richtungen werden über 0/400 gon korrekt gemittelt.</li>
+<li>Die übrigen Ziele der weiteren Aufstellung werden mit Richtung + OU angefügt.</li>
+</ol>
+<p>Ohne gemeinsame Ziele bleiben die Aufstellungen getrennt (Hinweis „Prüfung notwendig“).
+Streckendifferenzen und Höhenunterschiede über dem Grenzwert werden mit <code>n***</code> markiert,
+die Werte werden trotzdem gemittelt.</p>
+<table>
+<tr><th>Grenzwert</th><th>Vorgabe</th></tr>
+<tr><td>Richtungsdifferenz</td><td>0.0035 gon</td></tr>
+<tr><td>Streckendifferenzen</td><td>0.003 m</td></tr>
+<tr><td>Höhenunterschiede</td><td>0.100 m</td></tr>
+</table>
+<p>Protokoll <code>JAGMIT.OutM</code>: Spalte K <code>2(8)</code> = mit der 2. Aufstellung über
+8 gemeinsame Ziele vereinigt, <code>OU2</code> = Orientierungsunterschied der 2. Aufstellung,
+ANZ = Anzahl verwendeter Messungen Richtung/Strecke/Höhenunterschied.</p>
+
+<h2><a name="anzahl">Anzahl der Anzielungen</a></h2>
+<p><code>JAGNET.OutN</code> listet je Punkt, wie oft er Standpunkt war und von wie vielen Standpunkten
+er angezielt wurde. Punkte mit insgesamt nur einer Anzielung sind nicht kontrolliert und mit
+<code>***</code> markiert.</p>
+
+<h2><a name="ausgabe">Ausgabedateien</a></h2>
+<table>
+<tr><th>Datei</th><th>Inhalt</th></tr>
+<tr><td><code>Lagemessung_reduzierte_Werte_&lt;Art&gt;_für_Jag3D.BEO</code></td>
+<td>2D/3D: reduzierte Beobachtungen, Satzart <code>50.</code> mit Horizontalstrecke, Richtung und
+(nur 3D) Höhenunterschied; Instrumenten- und Reflektorhöhe 0. Import in Jag3D als „Beo (Neptan)“.</td></tr>
+<tr><td><code>Höhenmessung.NIV</code></td>
+<td>1D: Standpunkt, Ziel, Instrumentenhöhe, Zieltafelhöhe, Messwert, Strecke (Jag3D-Textimport
+„Nivellement“). Nivellement: virtueller Standpunkt, Lattenablesung als Zieltafelhöhe, Messwert 0.</td></tr>
+<tr><td><code>Festpunkte_&lt;Art&gt;_fuer_Jag3D.AltPkt</code></td><td>verwendete Festpunkte</td></tr>
+<tr><td><code>Neupunkte_&lt;Art&gt;_fuer_Jag3D.NeuPkt</code></td>
+<td>Neupunkte; 2D/3D mit 0, 1D mit dem Rechts-/Hochwert für Neupunkte (Vorgabe: größter Wert der
+Festpunkte + 100 m) und Höhe 0</td></tr>
+<tr><td><code>nicht_verwendete_Festpunkte_&lt;Art&gt;.DelPkt</code></td><td>Festpunkte ohne Beobachtung</td></tr>
+<tr><td><code>JAGRED.OutR</code>, <code>JAGMIT.OutM</code>, <code>JAGNET.OutN</code></td>
+<td>Protokolle Reduktion, Standpunktvereinigung, Anzahl der Anzielungen</td></tr>
+</table>
+<p>Festpunkt ist bei 1D ein Punkt mit Höhe, bei 2D/3D ein Punkt mit Rechtswert.
+Zahlen werden mit Dezimalpunkt geschrieben, Zeichensatz Windows (ANSI).</p>
+
+<h2><a name="konsole">Aufruf in der Eingabeaufforderung</a></h2>
+<pre>
+beo-tool-konsole.exe [Optionen] Messdatei [Messdatei ...]
+
+  -f beo|gsi|dat        Messdatenformat (Vorgabe: nach Dateiendung)
+  -a 1D|2D|3D           Ausgleichungsart (Vorgabe: 2D, bei gsi/dat 1D)
+  -p Datei              Festpunktdatei (mehrfach möglich)
+  -o Ordner             Ausgabeordner
+  --hauptpolygon        nur Beobachtungen zwischen Standpunkten (beo)
+  --ohne-zielachse      Zielachsfehler nicht anbringen (beo)
+  --zwischenblicke      negative Zwischenblicke löschen (gsi/dat)
+  --nullen              führende Nullen löschen (gsi/dat)
+  --zaehler n           Beginn Zählernummer (gsi/dat)
+  --neupunkt Y,X        Rechts- und Hochwert der Neupunkte bei 1D
+  --red R,S,H           Grenzwerte Reduktion
+  --mit R,S,H           Grenzwerte Standpunktvereinigung
+  -n                    nur rechnen, keine Dateien schreiben
+</pre>
+<p>Beispiel: <code>beo-tool-konsole.exe -a 3D -p BTFEST.PKT 20240603_FPF.beo</code></p>
+
+<p class="klein">beo-tool ist ein eigenständiges Programm. NEPTAN und Jag3D sind Produkte ihrer
+jeweiligen Hersteller; die Namen werden nur zur Beschreibung der Dateiformate verwendet.</p>
+</body>
+</html>

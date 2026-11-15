@@ -1,0 +1,59 @@
+beo-tool @VERSION@
+(c) Dipl.-Ing. (FH) Stefan Klein - MIT-Lizenz (siehe LIZENZ.txt)
+
+Reduktion von Messwerten, Standpunktvereinigung und Anzahl der Anzielungen
+fuer NEPTAN-Beobachtungsdateien (*.beo) und Nivellementdaten (Leica GSI,
+Trimble DAT). Ausgabe fuer die Netzausgleichung mit Jag3D (1D, 2D, 3D).
+
+
+INSTALLATION
+------------
+Keine Installation noetig. Den Ordner an eine beliebige Stelle kopieren
+(z. B. C:\Programme\beo-tool oder auf einen USB-Stick) und
+
+    beo-tool.exe
+
+starten. Eine Java-Installation ist NICHT erforderlich, die Java-Laufzeit
+liegt im Unterordner "runtime".
+
+Beim ersten Start kann Windows SmartScreen warnen ("Der Computer wurde durch
+Windows geschuetzt"), weil das Programm nicht digital signiert ist.
+Dann auf "Weitere Informationen" -> "Trotzdem ausfuehren" klicken.
+
+
+INHALT
+------
+beo-tool.exe              Programm mit Oberflaeche
+beo-tool-konsole.exe      Aufruf in der Eingabeaufforderung, z. B.
+                              beo-tool-konsole.exe -a 3D -p BTFEST.PKT Messung.beo
+                              beo-tool-konsole.exe -h      (alle Optionen)
+app\beo-tool.jar          Programm (laeuft auch mit installiertem Java 17+)
+runtime\                  Java-Laufzeit (Eclipse Temurin, GPLv2 mit Classpath
+                          Exception, Lizenzen in runtime\legal)
+beispiele\                Beispieldaten
+Handbuch.html             ausfuehrliche Anleitung (auch im Programm: F1)
+DRITTANBIETER.txt         Lizenzen der mitgelieferten Java- und Go-Laufzeit
+
+
+ERSTE SCHRITTE
+--------------
+1. Messdateien hinzufuegen (*.beo, *.gsi, *.dat) oder in das Fenster ziehen
+2. Festpunktdateien hinzufuegen (*.pkt), optional
+3. Ausgleichungsart (1D/2D/3D) und Grenzwerte pruefen
+4. "Berechnen und Dateien schreiben" (F5)
+
+Die Ergebnisdateien stehen im Ausgabeordner (Vorgabe: Ordner der ersten
+Messdatei):
+    Lagemessung_reduzierte_Werte_<Art>_für_Jag3D.BEO  bzw.  Höhenmessung.NIV
+    Festpunkte_<Art>_fuer_Jag3D.AltPkt
+    Neupunkte_<Art>_fuer_Jag3D.NeuPkt
+    nicht_verwendete_Festpunkte_<Art>.DelPkt
+    JAGRED.OutR  JAGMIT.OutM  JAGNET.OutN   (Protokolle)
+
+Einstellungen: %APPDATA%\beo-tool\einstellungen.properties
+
+
+KONTAKT
+-------
+Fragen, Fehlermeldungen und Wuensche ausschliesslich ueber das Forum:
+    https://github.com/htw9056/beo-tool/discussions

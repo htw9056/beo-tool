@@ -1,0 +1,7 @@
+*.class
+build/
+dist/
+bin/
+test/
+jdk/
+windows/starter/*.syso

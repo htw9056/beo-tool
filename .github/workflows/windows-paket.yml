@@ -1,0 +1,66 @@
+# Baut das Windows-Paket (beo-tool.exe mit eigener Java-Laufzeit) und veröffentlicht es
+# als Release zur Version aus src/beotool/Version.java. Existiert das Release schon,
+# wird das Paket ersetzt.
+name: Windows-Paket
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  paket:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Java 21 für Linux und Windows laden (Eclipse Temurin, gleiche Version)
+        run: |
+          set -e
+          curl -sSL -o linux.tar.gz "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse"
+          curl -sSL -o windows.zip  "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jdk/hotspot/normal/eclipse"
+          mkdir -p jdk/linux jdk/windows
+          tar -xzf linux.tar.gz -C jdk/linux
+          unzip -q windows.zip -d jdk/windows
+          echo "LINUX_JDK=$(ls -d $PWD/jdk/linux/*)" >> "$GITHUB_ENV"
+          echo "WIN_JDK=$(ls -d $PWD/jdk/windows/*)" >> "$GITHUB_ENV"
+
+      - name: Paket bauen
+        run: |
+          export PATH="$LINUX_JDK/bin:$PATH"
+          java -version
+          windows/paket_bauen.sh "$LINUX_JDK" "$WIN_JDK"
+
+      - name: Selbsttest mit den Beispieldaten
+        run: |
+          export PATH="$LINUX_JDK/bin:$PATH"
+          mkdir -p test
+          java -jar dist/beo-tool.jar -o test beispiele/Beispiel_Schleife.dat -p beispiele/Festpunkte_Hoehe.pkt
+          ls -la test
+
+      - name: Version bestimmen
+        id: v
+        run: echo "version=$(sed -n 's/.*VERSION = "\(V[0-9.]*\)".*/\1/p' src/beotool/Version.java)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: beo-tool_${{ steps.v.outputs.version }}_Windows
+          path: dist/*.zip
+
+      - name: Release anlegen oder aktualisieren
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          V: ${{ steps.v.outputs.version }}
+        run: |
+          if gh release view "$V" >/dev/null 2>&1; then
+            gh release upload "$V" dist/*.zip --clobber
+          else
+            gh release create "$V" dist/*.zip --title "beo-tool $V" --notes-file windows/RELEASE.md
+          fi
