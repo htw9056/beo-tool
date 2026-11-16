@@ -54,7 +54,6 @@ import javax.swing.SwingWorker;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * Oberfläche von beo-tool.
@@ -328,6 +327,31 @@ public final class Gui {
         k.add(leeren);
         p.add(k, BorderLayout.SOUTH);
         l.setTransferHandler(new DateiAblage());
+        boolean fest = modell == festModell;
+        l.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_DOWN_MASK), "einfuegen");
+        l.getActionMap().put("einfuegen", new javax.swing.AbstractAction() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                einfuegen(fest);
+            }
+        });
+        l.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "entfernen");
+        l.getActionMap().put("entfernen", new javax.swing.AbstractAction() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                for (String v : l.getSelectedValuesList()) {
+                    modell.removeElement(v);
+                }
+            }
+        });
+        JButton paste = new JButton("Pfad einfügen");
+        paste.setToolTipText("Kopierten Pfad oder kopierte Dateien einfügen (Strg+V in der Liste)");
+        paste.addActionListener(e -> einfuegen(fest));
+        k.add(paste);
         return p;
     }
 
@@ -412,7 +436,7 @@ public final class Gui {
         for (int i = 0; i < festModell.size(); i++) {
             par.festpunktdateien.add(festModell.get(i));
         }
-        par.ausgabeordner = ausgabe.getText().trim();
+        par.ausgabeordner = ohneAnfuehrung(ausgabe.getText());
         par.hauptpolygon = hauptpolygon.isSelected();
         par.zielachsfehlerAnbringen = zielachse.isSelected();
         par.negativeZwischenblickeLoeschen = zwischenblicke.isSelected();
@@ -474,28 +498,21 @@ public final class Gui {
         formatGeaendert();
     }
 
-    private JFileChooser waehler() {
-        JFileChooser c = new JFileChooser();
+    private File startordner() {
         if (!messModell.isEmpty()) {
-            c.setCurrentDirectory(new File(messModell.get(0)).getParentFile());
-        } else if (!festModell.isEmpty()) {
-            c.setCurrentDirectory(new File(festModell.get(0)).getParentFile());
+            return new File(messModell.get(0));
         }
-        c.setMultiSelectionEnabled(true);
-        return c;
+        if (!festModell.isEmpty()) {
+            return new File(festModell.get(0));
+        }
+        return null;
     }
 
     private void messHinzu() {
-        JFileChooser c = waehler();
-        c.setDialogTitle("Messdateien hinzufügen");
-        c.addChoosableFileFilter(new FileNameExtensionFilter("NEPTAN-Beobachtungen (*.beo)", "beo"));
-        c.addChoosableFileFilter(new FileNameExtensionFilter("Leica GSI (*.gsi)", "gsi"));
-        c.addChoosableFileFilter(new FileNameExtensionFilter("Trimble DAT (*.dat)", "dat"));
-        c.setAcceptAllFileFilterUsed(true);
-        if (c.showOpenDialog(fenster) == JFileChooser.APPROVE_OPTION) {
-            for (File f : c.getSelectedFiles()) {
-                messDatei(f);
-            }
+        File[] f = Dateiauswahl.oeffnenMehrere(fenster, "Messdateien hinzufügen", startordner(),
+                "Messdateien (*.beo, *.gsi, *.dat)", "beo", "gsi", "dat");
+        for (File d : f) {
+            messDatei(d);
         }
     }
 
@@ -517,24 +534,77 @@ public final class Gui {
     }
 
     private void festHinzu() {
-        JFileChooser c = waehler();
-        c.setDialogTitle("Festpunktdateien hinzufügen");
-        c.addChoosableFileFilter(new FileNameExtensionFilter("Punktdateien (*.pkt, *.txt)", "pkt", "txt"));
-        c.setAcceptAllFileFilterUsed(true);
-        if (c.showOpenDialog(fenster) == JFileChooser.APPROVE_OPTION) {
-            for (File f : c.getSelectedFiles()) {
-                if (!festModell.contains(f.getAbsolutePath())) {
-                    festModell.addElement(f.getAbsolutePath());
-                }
-            }
+        File[] f = Dateiauswahl.oeffnenMehrere(fenster, "Festpunktdateien hinzufügen", startordner(),
+                "Punktdateien (*.pkt, *.txt)", "pkt", "txt");
+        for (File d : f) {
+            festDatei(d);
         }
     }
 
+    private void festDatei(File f) {
+        if (!festModell.contains(f.getAbsolutePath())) {
+            festModell.addElement(f.getAbsolutePath());
+        }
+    }
+
+    /**
+     * Einfügen mit Strg+V: kopierte Dateien aus dem Explorer oder kopierte Pfade
+     * (auch "Als Pfad kopieren" mit Anführungszeichen, mehrere Zeilen möglich).
+     */
+    private void einfuegen(boolean fest) {
+        List<File> dateien = new ArrayList<>();
+        try {
+            java.awt.datatransfer.Transferable t = java.awt.Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .getContents(null);
+            if (t != null && t.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                @SuppressWarnings("unchecked")
+                List<File> l = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
+                dateien.addAll(l);
+            } else if (t != null && t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                String text = (String) t.getTransferData(DataFlavor.stringFlavor);
+                for (String z : text.split("[\\r\\n]+")) {
+                    String pfad = ohneAnfuehrung(z);
+                    if (!pfad.isEmpty()) {
+                        dateien.add(new File(pfad));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // nichts einzufügen
+        }
+        List<String> fehlt = new ArrayList<>();
+        for (File d : dateien) {
+            if (!d.isFile()) {
+                fehlt.add(d.getPath());
+            } else if (fest) {
+                festDatei(d.getAbsoluteFile());
+            } else {
+                messDatei(d.getAbsoluteFile());
+            }
+        }
+        if (!fehlt.isEmpty()) {
+            JOptionPane.showMessageDialog(fenster, "Datei nicht gefunden:\n" + String.join("\n", fehlt),
+                    "Einfügen", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    static String ohneAnfuehrung(String s) {
+        String t = s.trim();
+        if (t.length() >= 2 && t.startsWith("\"") && t.endsWith("\"")) {
+            t = t.substring(1, t.length() - 1).trim();
+        }
+        return t;
+    }
+
     private void ordnerWaehlen() {
-        JFileChooser c = waehler();
-        c.setMultiSelectionEnabled(false);
+        JFileChooser c = new JFileChooser();
+        String a = ohneAnfuehrung(ausgabe.getText());
+        File start = !a.isEmpty() ? new File(a) : startordner();
+        if (start != null) {
+            c.setCurrentDirectory(start.isDirectory() ? start : start.getAbsoluteFile().getParentFile());
+        }
         c.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        c.setDialogTitle("Ausgabeordner wählen");
+        c.setDialogTitle("Ausgabeordner wählen (Pfad kann auch eingefügt werden)");
         if (c.showOpenDialog(fenster) == JFileChooser.APPROVE_OPTION) {
             ausgabe.setText(c.getSelectedFile().getAbsolutePath());
         }
@@ -696,9 +766,7 @@ public final class Gui {
                 for (File f : dateien) {
                     String n = f.getName().toLowerCase(Locale.ROOT);
                     if (n.endsWith(".pkt") || n.endsWith(".txt")) {
-                        if (!festModell.contains(f.getAbsolutePath())) {
-                            festModell.addElement(f.getAbsolutePath());
-                        }
+                        festDatei(f);
                     } else if (f.isFile()) {
                         messDatei(f);
                     }

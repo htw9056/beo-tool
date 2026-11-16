@@ -41,13 +41,17 @@ Nivellementdaten (Leica GSI, Trimble DAT) für die Netzausgleichung mit <b>Jag3D
 
 <h2><a name="ablauf">Ablauf</a></h2>
 <ol>
-<li>Messdateien hinzufügen (Schaltfläche, Menü Datei oder Dateien in das Fenster ziehen).
+<li>Messdateien hinzufügen: Schaltfläche „Hinzufügen“ (Windows-Dateidialog mit Adressleiste, ein kopierter
+Pfad kann dort mit Strg+V eingefügt werden), „Pfad einfügen“ bzw. Strg+V in der Liste (kopierter Pfad, auch
+„Als Pfad kopieren“ aus dem Explorer mit Anführungszeichen, oder im Explorer kopierte Dateien) oder Dateien
+in das Fenster ziehen.
 Das Format wird aus der Dateiendung übernommen. Mehrere Dateien werden nacheinander gelesen.</li>
-<li>Festpunktdateien hinzufügen (optional).</li>
+<li>Festpunktdateien hinzufügen (optional, ebenso wie die Messdateien).</li>
 <li>Ausgleichungsart wählen: <code>1D_(Höhe)</code>, <code>2D_(Lage)</code> oder <code>3D_(Lage&amp;Höhe)</code>.</li>
 <li>Sonderfunktionen und Grenzwerte prüfen.</li>
 <li><b>Berechnen und Dateien schreiben</b> (F5). Die Ergebnisse stehen in den Registern rechts,
-die Dateien im Ausgabeordner (leer = Ordner der ersten Messdatei).</li>
+die Dateien im Ausgabeordner (leer = Ordner der ersten Messdatei; der Pfad kann direkt in das Feld
+eingefügt werden).</li>
 </ol>
 <p>Alle Einstellungen werden beim Beenden und vor jeder Berechnung gespeichert
 (<code>%APPDATA%\beo-tool\einstellungen.properties</code>).</p>

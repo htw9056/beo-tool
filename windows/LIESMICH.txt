@@ -37,7 +37,8 @@ DRITTANBIETER.txt         Lizenzen der mitgelieferten Java- und Go-Laufzeit
 
 ERSTE SCHRITTE
 --------------
-1. Messdateien hinzufuegen (*.beo, *.gsi, *.dat) oder in das Fenster ziehen
+1. Messdateien hinzufuegen (*.beo, *.gsi, *.dat), in das Fenster ziehen oder
+   einen kopierten Pfad mit "Pfad einfuegen" bzw. Strg+V in der Liste einfuegen
 2. Festpunktdateien hinzufuegen (*.pkt), optional
 3. Ausgleichungsart (1D/2D/3D) und Grenzwerte pruefen
 4. "Berechnen und Dateien schreiben" (F5)

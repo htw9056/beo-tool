@@ -92,6 +92,19 @@ public final class Auswertung {
             }
             pfade.add(p);
         }
+        java.util.Set<String> endungen = new java.util.TreeSet<>();
+        for (Path p : pfade) {
+            String n = p.getFileName().toString().toLowerCase(java.util.Locale.ROOT);
+            for (String x : new String[] {"beo", "gsi", "dat"}) {
+                if (n.endsWith("." + x)) {
+                    endungen.add(x);
+                }
+            }
+        }
+        if (endungen.size() > 1) {
+            throw new IOException("Die Messdateien haben unterschiedliche Formate (" + String.join(", ", endungen)
+                    + ").\nBitte nur Dateien eines Formates gemeinsam auswerten.");
+        }
         if (par.format == Messdaten.Format.BEO) {
             e.daten = new Messdaten(Messdaten.Format.BEO);
             for (Path p : pfade) {
