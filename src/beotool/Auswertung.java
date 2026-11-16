@@ -42,7 +42,9 @@ public final class Auswertung {
                 ziele += s.ziele.size();
             }
             sb.append(Version.titel()).append("\n\n");
-            sb.append("Messdaten:          ").append(daten.format.text).append("\n");
+            sb.append("Messdaten:          ").append(daten.format.istNivellement()
+                    ? "Nivellement (Leica GSI / Trimble DAT), " + daten.dateien.size() + " Datei(en)"
+                    : daten.format.text).append("\n");
             sb.append("Aufstellungen:      ").append(aufst).append(" mit ").append(beob).append(" Messungen\n");
             sb.append("Reduziert:          ").append(ziele).append(" gemittelte Ziele\n");
             sb.append("Nach Vereinigung:   ").append(vereinigung.size()).append(" Standpunkte\n");
@@ -101,9 +103,17 @@ public final class Auswertung {
                 }
             }
         }
-        if (endungen.size() > 1) {
-            throw new IOException("Die Messdateien haben unterschiedliche Formate (" + String.join(", ", endungen)
-                    + ").\nBitte nur Dateien eines Formates gemeinsam auswerten.");
+        boolean beo = endungen.contains("beo");
+        boolean niv = endungen.contains("gsi") || endungen.contains("dat");
+        if (beo && niv) {
+            throw new IOException("NEPTAN-Beobachtungsdateien (*.beo) werden für sich allein ausgewertet.\n"
+                    + "Gemeinsam auswerten lassen sich nur Nivellementdateien (*.gsi und *.dat).");
+        }
+        if (beo && par.format != Messdaten.Format.BEO) {
+            throw new IOException("Für *.beo-Dateien bitte das Format NEPTAN-Beobachtungsdatei wählen.");
+        }
+        if (niv && par.format == Messdaten.Format.BEO) {
+            throw new IOException("Für *.gsi- und *.dat-Dateien bitte ein Nivellementformat wählen.");
         }
         if (par.format == Messdaten.Format.BEO) {
             e.daten = new Messdaten(Messdaten.Format.BEO);

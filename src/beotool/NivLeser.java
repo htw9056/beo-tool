@@ -51,6 +51,8 @@ public final class NivLeser {
 
     /**
      * Liest mehrere Dateien nacheinander; der Aufstellungszähler läuft über alle Dateien weiter.
+     * GSI- und DAT-Dateien können gemeinsam gelesen werden, das Format wird je Datei an der
+     * Endung erkannt (sonst gilt das gewählte Format).
      */
     public static Messdaten lies(List<Path> dateien, Messdaten.Format format, Optionen opt) throws IOException {
         Messdaten daten = new Messdaten(format);
@@ -59,7 +61,11 @@ public final class NivLeser {
             List<String> zeilen = Files.readAllLines(p, StandardCharsets.ISO_8859_1);
             String name = p.getFileName().toString();
             daten.dateien.add(p.toString());
-            List<Ablesung> liste = format == Messdaten.Format.GSI
+            // Format je Datei nach der Endung, GSI und DAT dürfen gemischt werden
+            String klein = name.toLowerCase(java.util.Locale.ROOT);
+            Messdaten.Format f = klein.endsWith(".gsi") ? Messdaten.Format.GSI
+                    : klein.endsWith(".dat") ? Messdaten.Format.DAT : format;
+            List<Ablesung> liste = f == Messdaten.Format.GSI
                     ? gsi(zeilen, name, daten.hinweise)
                     : dat(zeilen, name, daten.hinweise);
             Messdaten.Standpunkt sp = null;

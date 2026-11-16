@@ -200,7 +200,8 @@ public final class Ausgabe {
         sb.append(Version.titel()).append(NL);
         sb.append(titel).append(NL);
         sb.append("=".repeat(titel.length())).append(NL).append(NL);
-        sb.append("Messdatenformat:   ").append(daten.format.text).append(NL);
+        sb.append("Messdatenformat:   ").append(daten.format.istNivellement()
+                ? "Nivellement (Leica GSI / Trimble DAT)" : daten.format.text).append(NL);
         for (String d : daten.dateien) {
             sb.append("Messdatei:         ").append(d).append(NL);
         }
