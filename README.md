@@ -25,16 +25,19 @@ Eine Java-Installation ist nicht nötig, die Java-Laufzeit ist im Paket enthalte
 - **Ausgabe:** reduzierte Beobachtungen für Jag3D (`*.BEO` bzw. `Höhenmessung.NIV`),
   Fest-, Neu- und nicht verwendete Festpunkte, Protokolle
 - Oberfläche und Aufruf in der Eingabeaufforderung (`beo-tool-konsole.exe`)
+- Dateien und Protokolle im selben Aufbau wie das bisherige Excel-Werkzeug „Konvertierung für Jag3D“
 
 Ausführliche Beschreibung: [Handbuch](src/beotool/hilfe/hilfe.html) (im Programm mit F1).
 
 ## Aufruf in der Eingabeaufforderung
 
 ```
-beo-tool-konsole.exe -a 3D -p BTFEST.PKT 20240603_FPF.beo
-beo-tool-konsole.exe -p Festpunkte_Hoehe.pkt Beispiel_Schleife.dat
+beo-tool-konsole.exe -a 3D -p beispiele\Beispiel_Festpunkte.pkt beispiele\Beispiel_Netz.beo
+beo-tool-konsole.exe -p beispiele\Festpunkte_Hoehe.pkt beispiele\Beispiel_Schleife.dat beispiele\Beispiel_Linie_angehaengt.gsi
 beo-tool-konsole.exe -h
 ```
+
+Die Beispieldaten im Ordner `beispiele` sind frei erfunden.
 
 ## Selbst bauen
 

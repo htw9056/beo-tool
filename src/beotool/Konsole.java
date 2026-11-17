@@ -22,7 +22,7 @@ public final class Konsole {
         o.println("  -p Datei              Festpunktdatei (mehrfach möglich)");
         o.println("  -o Ordner             Ausgabeordner (Vorgabe: Ordner der ersten Messdatei)");
         o.println("  --hauptpolygon        nur Beobachtungen zwischen Standpunkten verwenden (beo)");
-        o.println("  --ohne-zielachse      Zielachsfehler nicht aus Lage I/II anbringen (beo)");
+        o.println("  --zielachse           Zielachsfehler aus Lage I/II anbringen (beo)");
         o.println("  --zwischenblicke      negative Zwischenblicke löschen (gsi/dat)");
         o.println("  --nullen              führende Nullen der Punktnummern löschen (gsi/dat)");
         o.println("  --zaehler n           Beginn Zählernummer der Aufstellungen (gsi/dat, Vorgabe 1)");
@@ -64,6 +64,9 @@ public final class Konsole {
                         break;
                     case "--hauptpolygon":
                         par.hauptpolygon = true;
+                        break;
+                    case "--zielachse":
+                        par.zielachsfehlerAnbringen = true;
                         break;
                     case "--ohne-zielachse":
                         par.zielachsfehlerAnbringen = false;

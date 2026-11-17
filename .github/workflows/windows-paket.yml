@@ -42,8 +42,9 @@ jobs:
         run: |
           export PATH="$LINUX_JDK/bin:$PATH"
           mkdir -p test
-          java -jar dist/beo-tool.jar -o test beispiele/Beispiel_Schleife.dat -p beispiele/Festpunkte_Hoehe.pkt
-          ls -la test
+          java -jar dist/beo-tool.jar -o test/niv -p beispiele/Festpunkte_Hoehe.pkt beispiele/Beispiel_Schleife.dat beispiele/Beispiel_Linie_angehaengt.gsi
+          java -jar dist/beo-tool.jar -a 3D -o test/beo -p beispiele/Beispiel_Festpunkte.pkt beispiele/Beispiel_Netz.beo
+          ls -la test/niv test/beo
 
       - name: Version bestimmen
         id: v

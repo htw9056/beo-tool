@@ -94,10 +94,10 @@ Für reine Höhenfestpunkte genügt <code>Punktnummer Höhe</code>.</p>
 <code>s · cos z − Reflektorhöhe + Instrumentenhöhe</code> (von Punkt zu Punkt). Fehlt die Zenitdistanz,
 wird die Strecke unverändert übernommen („keine Horizontalstrecke!“).</li>
 <li>Richtungen beiderseits von 0/400 gon werden in einen gemeinsamen Bereich gelegt.</li>
-<li><b>Zielachsfehler:</b> c = (Mittel Lage II − Mittel Lage I) / 2 wird an den Einzelrichtungen
-angebracht (Lage I + c, Lage II − c). Das Richtungsmittel ändert sich nicht, aber beide Lagen werden
-gleichgestellt. Ohne diesen Schritt würde bei einem Zielachsfehler größer als der Grenzwert eine
-ganze Fernrohrlage eliminiert. Abschaltbar unter Sonderfunktionen.</li>
+<li><b>Zielachsfehler (optional, Sonderfunktionen):</b> c = (Mittel Lage II − Mittel Lage I) / 2 wird an
+den Einzelrichtungen angebracht (Lage I + c, Lage II − c). Beide Lagen werden dadurch gleichgestellt.
+Ohne diesen Schritt kann bei einem Zielachsfehler größer als der Grenzwert der Richtungsdifferenz eine
+ganze Fernrohrlage eliminiert werden. Vorgabe: aus (Ergebnisse wie im Excel-Werkzeug).</li>
 <li>Je Messelement (Richtung, Strecke, Höhenunterschied) wird der Einzelwert mit der größten
 Abweichung vom Mittel eliminiert, solange diese den Grenzwert erreicht oder überschreitet.</li>
 <li>Mittel der verbleibenden Werte: Richtung 5, Strecke und Höhenunterschied 4 Nachkommastellen
@@ -171,7 +171,7 @@ beo-tool-konsole.exe [Optionen] Messdatei [Messdatei ...]
   -p Datei              Festpunktdatei (mehrfach möglich)
   -o Ordner             Ausgabeordner
   --hauptpolygon        nur Beobachtungen zwischen Standpunkten (beo)
-  --ohne-zielachse      Zielachsfehler nicht anbringen (beo)
+  --zielachse           Zielachsfehler aus Lage I/II anbringen (beo)
   --zwischenblicke      negative Zwischenblicke löschen (gsi/dat)
   --nullen              führende Nullen löschen (gsi/dat)
   --zaehler n           Beginn Zählernummer (gsi/dat)

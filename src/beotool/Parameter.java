@@ -51,7 +51,7 @@ public class Parameter {
     public double redStrecke = 0.0007;
     public double redHoehe = 0.100;
     public double redHoeheNiv = 0.00005;
-    public boolean zielachsfehlerAnbringen = true;
+    public boolean zielachsfehlerAnbringen = false;
 
     // Standpunktvereinigung
     public double mitRichtung = 0.0035;
@@ -131,7 +131,7 @@ public class Parameter {
         redStrecke = zahl(p.getProperty("redStrecke"), redStrecke);
         redHoehe = zahl(p.getProperty("redHoehe"), redHoehe);
         redHoeheNiv = zahl(p.getProperty("redHoeheNiv"), redHoeheNiv);
-        zielachsfehlerAnbringen = Boolean.parseBoolean(p.getProperty("zielachsfehlerAnbringen", "true"));
+        zielachsfehlerAnbringen = Boolean.parseBoolean(p.getProperty("zielachsfehlerAnbringen", "false"));
         mitRichtung = zahl(p.getProperty("mitRichtung"), mitRichtung);
         mitStrecke = zahl(p.getProperty("mitStrecke"), mitStrecke);
         mitHoehe = zahl(p.getProperty("mitHoehe"), mitHoehe);
