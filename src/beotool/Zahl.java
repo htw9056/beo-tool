@@ -52,6 +52,21 @@ public final class Zahl {
         return b.toPlainString();
     }
 
+    /**
+     * Wie VBA Format(x, "0.0000#") mit deutschem Dezimalkomma: mindestens 4, höchstens 5
+     * Nachkommastellen (so stehen Differenzen als Text in den Excel-Protokollen).
+     */
+    public static String formatKomma(double x) {
+        if (Double.isNaN(x)) {
+            return "";
+        }
+        String s = fmt(x, 5);
+        if (s.endsWith("0")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        return s.replace('.', ',');
+    }
+
     /** Liest eine Zahl mit Punkt oder Komma, NaN wenn leer oder ungültig. */
     public static double lies(String s) {
         if (s == null) {

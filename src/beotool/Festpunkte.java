@@ -5,10 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Festpunkte aus einer oder mehreren Punktdateien (*.pkt), z. B. NEPTAN BTFEST.PKT.
@@ -76,19 +73,17 @@ public class Festpunkte {
         return (!Double.isNaN(w) && w == -1000.0) ? Double.NaN : w;
     }
 
-    /** Sortiert nach Punktnummer (Zahlen numerisch vor Text) und entfernt doppelte Punktnummern. */
+    /**
+     * Prüft auf doppelte Punktnummern. Wie im Excel-Werkzeug bleiben alle Einträge in der
+     * Reihenfolge der Datei erhalten; verwendet wird jeweils der erste.
+     */
     public void ordnen() {
-        Map<String, Punkt> m = new LinkedHashMap<>();
+        java.util.Set<String> gesehen = new java.util.HashSet<>();
         for (Punkt p : punkte) {
-            if (m.containsKey(p.name)) {
+            if (!gesehen.add(p.name)) {
                 hinweise.add("Festpunkt " + p.name + " mehrfach vorhanden, der erste Eintrag wird verwendet.");
-                continue;
             }
-            m.put(p.name, p);
         }
-        punkte.clear();
-        punkte.addAll(m.values());
-        punkte.sort(Comparator.comparing(p -> p.name, Punktnummer.VERGLEICH));
     }
 
     public Punkt suche(String name) {

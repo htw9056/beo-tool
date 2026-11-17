@@ -51,6 +51,8 @@ public final class Vereinigung {
         /** Orientierungsunterschiede der angefügten Aufstellungen, z. B. "OU2=0.00109gon". */
         public String orientierung = "";
         public String hinweis = "";
+        /** Orientierungsunterschied der zuletzt angefügten Aufstellung wie im Excel-Werkzeug ("OU2=-0,00091gon"). */
+        public String ouExcel = "";
         public int aufstellungen = 1;
         public final List<Ziel> ziele = new ArrayList<>();
     }
@@ -124,7 +126,7 @@ public final class Vereinigung {
                     }
                     if (groesstes != null && maxAbw > par.mitRichtung) {
                         double d = Zahl.runden(Zahl.norm200(groesstes[0].richtung - groesstes[1].richtung), sr);
-                        String text = marke + Zahl.fmt(Zahl.runden(ou - d, sr - 1), sr - 1);
+                        String text = marke + Zahl.formatKomma(Zahl.runden(ou - d, sr - 1));
                         groesstes[0].vRichtung = text;
                         groesstes[0].ausgeschlossen = true;
                         groesstes[1].vRichtung = text;
@@ -165,7 +167,7 @@ public final class Vereinigung {
                     if (!Double.isNaN(b.richtung)) {
                         int nN = a.aufstR + 1;
                         double d = Zahl.runden(Zahl.norm200(a.richtung - b.richtung), sr);
-                        a.vRichtung = Zahl.fmt(Zahl.runden(Zahl.norm200(ou - d), sr - 1), sr - 1);
+                        a.vRichtung = Zahl.formatKomma(Zahl.runden(Zahl.norm200(ou - d), sr - 1));
                         double r2 = Zahl.norm400(b.richtung + ou);
                         double dr = Zahl.norm200(r2 - a.richtung);
                         double r = Zahl.runden(Zahl.norm400(a.richtung + dr / nN), sr);
@@ -183,7 +185,7 @@ public final class Vereinigung {
                         }
                     } else {
                         double diff = Zahl.runden(a.strecke - b.strecke, 4);
-                        a.dStrecke = (Math.abs(diff) > par.mitStrecke ? marke : "") + Zahl.fmt(diff, 4);
+                        a.dStrecke = (Math.abs(diff) > par.mitStrecke ? marke : "") + Zahl.formatKomma(diff);
                         a.strecke = Zahl.runden((a.strecke * a.aufstS + b.strecke) / (a.aufstS + 1), sl);
                         a.aufstS++;
                     }
@@ -197,7 +199,7 @@ public final class Vereinigung {
                         }
                     } else {
                         double diff = Zahl.runden(a.hoehe - b.hoehe, 4);
-                        a.dHoehe = (Math.abs(diff) > par.mitHoehe ? marke : "") + Zahl.fmt(diff, 4);
+                        a.dHoehe = (Math.abs(diff) > par.mitHoehe ? marke : "") + Zahl.formatKomma(diff);
                         a.hoehe = Zahl.runden((a.hoehe * a.aufstH + b.hoehe) / (a.aufstH + 1), sl);
                         a.aufstH++;
                     }
@@ -217,6 +219,7 @@ public final class Vereinigung {
                 String ouText = "OU" + zaehler + "=" + Zahl.fmt(ou, sr) + "gon";
                 st1.orientierung = st1.orientierung.isEmpty() ? ouText : st1.orientierung + " / " + ouText;
                 st1.aufstellungen++;
+                st1.ouExcel = "OU" + zaehler + "=" + Zahl.fmt(ou, sr).replace('.', ',') + "gon";
                 hinweise.add("Standpunktvereinigung " + st1.name + ": " + zaehler + ". Aufstellung über " + anzahl
                         + " gemeinsame Ziele vereinigt, " + ouText + ".");
                 liste.remove(j);

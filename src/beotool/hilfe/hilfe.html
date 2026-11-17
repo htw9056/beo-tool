@@ -72,7 +72,9 @@ Standpunkte ohne solche Beobachtung entfallen. Die Dateinamen erhalten den Zusat
 <h3>Nivellement: Leica GSI-8/GSI-16 und Trimble DAT (M5)</h3>
 <p>GSI: Wortindizes 11 (Punktnummer), 32 (Zielweite), 331/335 (Rückblick), 332/336 (Vorblick),
 333/334 (Zwischenblick); Einheit aus der Wortinformation (mm, 1/10 mm, 1/100 mm).
-DAT: Lr/Rb (Rückblick), Lv/Rf (Vorblick), Lz/Rz (Zwischenblick), HD (Zielweite).</p>
+DAT: Lr/Rb (Rückblick), Lv/Rf (Vorblick), Lz/Rz (Zwischenblick), HD/E (Zielweite). Eine vom Instrument
+verworfene Messung (Punktnummer mit <code>#####</code>) wird übergangen; die Wiederholung mit Punktnummer
+<code>?</code> erhält deren Punktnummer.</p>
 <p>Jeder Rückblick beginnt eine neue Aufstellung mit dem Namen <code>nnnn_Rückblickpunkt</code>
 (Zähler ab „Beginn Zählernummer“, vierstellig). Ein zweiter Rückblick auf denselben Punkt nach einem
 Vorblick (Verfahren RVVR) gehört zur selben Aufstellung. Die Lattenablesung wird wie ein

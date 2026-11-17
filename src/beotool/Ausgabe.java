@@ -20,7 +20,7 @@ public final class Ausgabe {
 
     /**
      * Reduzierte Lagebeobachtungen (Satzart 50) für Jag3D bzw. NEPTAN-Leser.
-     * Spalten: Satzart(6) Exzentrum(10) Punkt(15) Horizontalstrecke(18) Richtung(16)
+     * Spalten: Satzart(5) Exzentrum(10) Punkt(15) Horizontalstrecke(19) Richtung(16)
      * Höhenunterschied(15) Instrumenten-/Reflektorhöhe(14). Bei 2D bleibt der Höhenunterschied leer.
      * Instrumenten- und Reflektorhöhe sind 0, weil der Höhenunterschied von Punkt zu Punkt gilt.
      */
@@ -28,11 +28,12 @@ public final class Ausgabe {
         StringBuilder sb = new StringBuilder();
         boolean mitHoehe = par.art == Parameter.Ausgleichungsart.D3;
         for (Vereinigung.Standpunkt s : liste) {
-            sb.append(Zahl.rechts("10.", 6)).append(Zahl.rechts("0.0", 10)).append(Zahl.rechts(s.name, 15))
-                    .append(" ".repeat(18 + 16 + 15)).append(Zahl.rechts("0.000", 14)).append(NL);
+            sb.append(Zahl.rechts("10.", 5)).append(Zahl.rechts("0.0", 10)).append(Zahl.rechts(s.name, 15))
+                    .append(" ".repeat(19)).append(Zahl.links(s.ouExcel, 16)).append(" ".repeat(15))
+                    .append(Zahl.rechts("0", 14)).append(NL);
             for (Vereinigung.Ziel z : s.ziele) {
-                sb.append(Zahl.rechts("50.", 6)).append(Zahl.rechts("0.0", 10)).append(Zahl.rechts(z.name, 15))
-                        .append(Zahl.rechts(Zahl.fmt(z.strecke, sl), 18))
+                sb.append(Zahl.rechts("50.", 5)).append(Zahl.rechts("0.0", 10)).append(Zahl.rechts(z.name, 15))
+                        .append(Zahl.rechts(Zahl.fmt(z.strecke, sl), 19))
                         .append(Zahl.rechts(Zahl.fmt(z.richtung, Reduktion.stellenRichtung()), 16))
                         .append(Zahl.rechts(mitHoehe ? Zahl.fmt(z.hoehe, sl) : "", 15))
                         .append(Zahl.rechts("0", 14)).append(NL);
@@ -59,12 +60,12 @@ public final class Ausgabe {
                 if (Double.isNaN(z.hoehe)) {
                     continue;
                 }
-                sb.append(Zahl.rechts(s.name, 24)).append(Zahl.rechts(z.name, 24));
+                sb.append(Zahl.rechts(s.name, 23)).append(Zahl.rechts(z.name, 24));
                 if (niv) {
-                    sb.append(Zahl.rechts(Zahl.fmt(0, 5), 28)).append(Zahl.rechts(Zahl.fmt(z.hoehe, sl), 24))
+                    sb.append(Zahl.rechts(Zahl.fmt(0, 5), 29)).append(Zahl.rechts(Zahl.fmt(z.hoehe, sl), 24))
                             .append(Zahl.rechts(Zahl.fmt(0, 5), 24));
                 } else {
-                    sb.append(Zahl.rechts("0.000", 28)).append(Zahl.rechts("0.000", 24))
+                    sb.append(Zahl.rechts("0.000", 29)).append(Zahl.rechts("0.000", 24))
                             .append(Zahl.rechts(Zahl.fmt(z.hoehe, sl), 24));
                 }
                 sb.append(Zahl.rechts(Zahl.fmt(z.strecke, sl), 24)).append(NL);
@@ -89,9 +90,14 @@ public final class Ausgabe {
     }
 
     /**
-     * Teilt alle Punkte der Beobachtungen in Fest- und Neupunkte (Excel: Festpunkte_schreiben).
-     * 1D: Festpunkt = Höhe vorhanden; Neupunkte erhalten Rechts-/Hochwert des Neupunktes und Höhe 0.
-     * 2D/3D: Festpunkt = Rechtswert vorhanden; Neupunkte erhalten 0.
+     * Teilt alle Punkte der Beobachtungen in Fest- und Neupunkte (Excel: Festpunkte_schreiben),
+     * mit derselben Reihenfolge wie im Excel-Werkzeug:
+     * Punktnummern als Text sortiert, Koordinaten aus den Festpunkten übernommen, dann nach
+     * Rechtswert aufsteigend, bei 1D zuletzt nach Hochwert absteigend (Punkte ohne Koordinaten
+     * jeweils am Ende).
+     * 1D: Festpunkt = Höhe ungleich 0, Neupunkt = Höhe 0 oder leer; fehlende Rechts-/Hochwerte
+     * erhalten die Neupunktkoordinate (Vorgabe: größter Wert + 100 m).
+     * 2D/3D: Festpunkt = Rechtswert ungleich 0, Neupunkt = Rechtswert 0 oder leer; leere Werte = 0.
      */
     public static Punkte punkte(List<Vereinigung.Standpunkt> liste, Festpunkte fp, Parameter par) {
         Set<String> namen = new LinkedHashSet<>();
@@ -102,75 +108,81 @@ public final class Ausgabe {
             }
         }
         List<String> sortiert = new ArrayList<>(namen);
-        sortiert.sort(Punktnummer.VERGLEICH);
+        sortiert.sort(Punktnummer.TEXT);
         Punkte e = new Punkte();
-        Set<String> benutzt = new LinkedHashSet<>();
         boolean d1 = par.art == Parameter.Ausgleichungsart.D1;
         boolean d2 = par.art == Parameter.Ausgleichungsart.D2;
 
-        double maxY = Double.NaN;
-        double maxX = Double.NaN;
+        List<double[]> zeilen = new ArrayList<>();
+        List<String> zn = new ArrayList<>();
+        Set<String> benutzt = new LinkedHashSet<>();
         for (String n : sortiert) {
             Festpunkte.Punkt p = fp.suche(n);
-            if (p != null) {
-                if (!Double.isNaN(p.y)) {
-                    maxY = Double.isNaN(maxY) ? p.y : Math.max(maxY, p.y);
-                }
-                if (!Double.isNaN(p.x)) {
-                    maxX = Double.isNaN(maxX) ? p.x : Math.max(maxX, p.x);
-                }
-            }
-        }
-        e.neupunktY = !Double.isNaN(par.neupunktY) ? par.neupunktY
-                : Math.round((Double.isNaN(maxY) ? 0 : maxY) + 100);
-        e.neupunktX = !Double.isNaN(par.neupunktX) ? par.neupunktX
-                : Math.round((Double.isNaN(maxX) ? 0 : maxX) + 100);
-
-        for (String n : sortiert) {
-            Festpunkte.Punkt p = fp.suche(n);
-            boolean istFest;
-            if (d1) {
-                istFest = p != null && !Double.isNaN(p.z) && p.z != 0.0;
-            } else {
-                istFest = p != null && !Double.isNaN(p.y) && p.y != 0.0;
-            }
             if (p != null) {
                 benutzt.add(n);
             }
-            if (istFest) {
-                if (d1) {
-                    e.fest.add(new String[] {n, wert(p.y, e.neupunktY), wert(p.x, e.neupunktX), Zahl.kurz(p.z, 6)});
-                } else if (d2) {
-                    e.fest.add(new String[] {n, Zahl.kurz(p.y, 6), wert(p.x, 0)});
-                } else {
-                    e.fest.add(new String[] {n, Zahl.kurz(p.y, 6), wert(p.x, 0), wert(p == null ? Double.NaN : p.z, 0)});
-                }
-            } else {
-                if (d1) {
-                    double y = p != null && !Double.isNaN(p.y) ? p.y : e.neupunktY;
-                    double x = p != null && !Double.isNaN(p.x) ? p.x : e.neupunktX;
-                    e.neu.add(new String[] {n, Zahl.kurz(y, 6), Zahl.kurz(x, 6), "0"});
-                } else if (d2) {
-                    e.neu.add(new String[] {n, "0", "0"});
-                } else {
-                    e.neu.add(new String[] {n, "0", "0", "0"});
-                }
+            zeilen.add(new double[] {p == null ? Double.NaN : p.y, p == null ? Double.NaN : p.x,
+                p == null ? Double.NaN : p.z});
+            zn.add(n);
+        }
+        List<Integer> idx = new ArrayList<>();
+        for (int i = 0; i < zeilen.size(); i++) {
+            idx.add(i);
+        }
+        sortiere(idx, zeilen, 0, true);
+        if (d1) {
+            double ny;
+            double nx;
+            sortiere(idx, zeilen, 1, true);
+            sortiere(idx, zeilen, 0, false);
+            ny = zeilen.get(idx.get(0))[0];
+            sortiere(idx, zeilen, 1, false);
+            nx = zeilen.get(idx.get(0))[1];
+            e.neupunktY = !Double.isNaN(par.neupunktY) ? par.neupunktY
+                    : Zahl.runden((Double.isNaN(ny) ? 0 : ny) + 100, 0);
+            e.neupunktX = !Double.isNaN(par.neupunktX) ? par.neupunktX
+                    : Zahl.runden((Double.isNaN(nx) ? 0 : nx) + 100, 0);
+        }
+        for (int i : idx) {
+            double[] w = zeilen.get(i);
+            String n = zn.get(i);
+            double y = Double.isNaN(w[0]) ? (d1 ? e.neupunktY : 0) : w[0];
+            double x = Double.isNaN(w[1]) ? (d1 ? e.neupunktX : 0) : w[1];
+            double z = Double.isNaN(w[2]) ? 0 : w[2];
+            double pruef = d1 ? z : y;
+            String[] zeile = d2 ? new String[] {n, Zahl.fmt(y, 4), Zahl.fmt(x, 4)}
+                    : new String[] {n, Zahl.fmt(y, 4), Zahl.fmt(x, 4), Zahl.fmt(z, 4)};
+            if (pruef <= 0) {
+                e.neu.add(zeile);
+            }
+            if (pruef != 0) {
+                e.fest.add(zeile);
             }
         }
         for (Festpunkte.Punkt p : fp.punkte) {
             if (!benutzt.contains(p.name)) {
-                e.unbenutzt.add(new String[] {p.name, Zahl.kurz(p.y, 6), Zahl.kurz(p.x, 6), Zahl.kurz(p.z, 6)});
+                e.unbenutzt.add(new String[] {p.name, Zahl.fmt(p.y, 4), Zahl.fmt(p.x, 4), Zahl.fmt(p.z, 4)});
             }
         }
         return e;
     }
 
-    private static String wert(double w, double ersatz) {
-        return Zahl.kurz(Double.isNaN(w) ? ersatz : w, 6);
+    /** Stabile Sortierung nach einer Spalte; leere Werte bleiben in beiden Richtungen am Ende (wie Excel). */
+    private static void sortiere(List<Integer> idx, List<double[]> zeilen, int spalte, boolean aufsteigend) {
+        idx.sort((a, b) -> {
+            double x = zeilen.get(a)[spalte];
+            double y = zeilen.get(b)[spalte];
+            boolean lx = Double.isNaN(x);
+            boolean ly = Double.isNaN(y);
+            if (lx || ly) {
+                return lx == ly ? 0 : lx ? 1 : -1;
+            }
+            return aufsteigend ? Double.compare(x, y) : Double.compare(y, x);
+        });
     }
 
     public static String punktdatei(List<String[]> zeilen) {
-        int[] breiten = {16, 28, 24, 24};
+        int[] breiten = {15, 29, 24, 24};
         StringBuilder sb = new StringBuilder();
         for (String[] z : zeilen) {
             for (int i = 0; i < z.length; i++) {
@@ -195,148 +207,185 @@ public final class Ausgabe {
 
     // ------------------------------------------------------------- Protokolle
 
-    private static String kopf(String titel, Parameter par, Messdaten daten) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(Version.titel()).append(NL);
-        sb.append(titel).append(NL);
-        sb.append("=".repeat(titel.length())).append(NL).append(NL);
-        sb.append("Messdatenformat:   ").append(daten.format.istNivellement()
-                ? "Nivellement (Leica GSI / Trimble DAT)" : daten.format.text).append(NL);
-        for (String d : daten.dateien) {
-            sb.append("Messdatei:         ").append(d).append(NL);
+    // ------------------------------------------------------------- Protokolle (Aufbau wie Excel)
+
+    /** Eine Textzeile mit festen Spalten wie beim Speichern als formatierter Text aus Excel. */
+    static final class Zeile {
+        private final StringBuilder sb = new StringBuilder();
+
+        /** Zahl rechtsbündig, endet an Spalte bis. */
+        Zeile zahl(String s, int bis) {
+            return setzen(s, bis);
         }
-        sb.append("Ausgleichungsart:  ").append(par.art.text).append(NL);
-        if (daten.format == Messdaten.Format.BEO) {
-            sb.append("Hauptpolygonzug:   ").append(par.hauptpolygon
-                    ? "geprüft - Beobachtungen zu Punkten, die kein Standpunkt sind, gelöscht"
-                    : "nicht geprüft").append(NL);
+
+        /** Text rechtsbündig, endet eine Stelle vor bis; zu lang = ab von. */
+        Zeile text(String s, int von, int bis) {
+            if (s == null || s.isEmpty()) {
+                return this;
+            }
+            if (s.length() > bis - von - 1) {
+                auffuellen(von);
+                sb.append(s);
+                return this;
+            }
+            return setzen(s, bis - 1);
         }
-        return sb.toString();
+
+        /** Text linksbündig ab Spalte von. */
+        Zeile links(String s, int von) {
+            if (s == null || s.isEmpty()) {
+                return this;
+            }
+            auffuellen(von);
+            sb.append(s);
+            return this;
+        }
+
+        private Zeile setzen(String s, int bis) {
+            if (s == null || s.isEmpty()) {
+                return this;
+            }
+            int von = bis - s.length();
+            if (von < sb.length()) {
+                von = sb.length() + (sb.length() > 0 ? 1 : 0);
+            }
+            auffuellen(von);
+            sb.append(s);
+            return this;
+        }
+
+        private void auffuellen(int bis) {
+            while (sb.length() < bis) {
+                sb.append(' ');
+            }
+        }
+
+        @Override
+        public String toString() {
+            return sb.toString();
+        }
     }
 
-    /** Protokoll der Reduktion (entspricht JAGRED.OUT). */
+    private static String komma(double v, int stellen) {
+        return Zahl.formatKomma(Zahl.runden(v, stellen));
+    }
+
+    /** Protokoll der Reduktion (JAGRED.OUT, Aufbau wie im Excel-Werkzeug). */
     public static String protokollReduktion(List<Reduktion.Standpunkt> red, Parameter par, Messdaten daten) {
         int sl = Reduktion.stellenLaenge(daten.format);
         int sr = Reduktion.stellenRichtung();
-        StringBuilder sb = new StringBuilder(kopf("Reduktion von Messwerten", par, daten));
-        sb.append(NL);
-        sb.append("Richtungsdifferenz:        ").append(Zahl.fmt(par.redRichtung, 5)).append(" gon").append(NL);
-        sb.append("Streckendifferenz:         ").append(Zahl.fmt(par.redStrecke, 5)).append(" m").append(NL);
-        sb.append("Höhenunterschieddifferenz: ").append(Zahl.fmt(par.redHoeheWirksam(), 5)).append(" m").append(NL);
-        if (!daten.format.istNivellement()) {
-            sb.append("Zielachsfehler:            ").append(par.zielachsfehlerAnbringen
-                    ? "aus Lage I/II je Ziel bestimmt und angebracht" : "nicht angebracht").append(NL);
-        }
-        sb.append(NL);
-        sb.append("*** = eliminiert (Abweichung vom Mittel >= Grenzwert), DIFF = Mittel - Einzelwert").append(NL);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Reduktion von Messwerten").append(NL).append(NL);
+        sb.append(new Zeile().links("Richtungsdifferenz:", 0).zahl(Zahl.fmt(par.redRichtung, 4), 48).text("gon", 48, 62))
+                .append(NL);
+        sb.append(new Zeile().links("Streckendifferenz:", 0).zahl(Zahl.fmt(par.redStrecke, 4), 48).text("m", 48, 62))
+                .append(NL);
+        sb.append(new Zeile().links("Höhenunterschieddifferenz:", 0).zahl(Zahl.fmt(par.redHoeheWirksam(), 4), 48)
+                .text("m", 48, 62)).append(NL);
+        sb.append(new Zeile().links("Additionskonstante:", 0).zahl("0", 48).text("m", 48, 62)).append(NL);
+        sb.append(new Zeile().links("Kippachsunterschied:", 0).zahl("0", 48).text("m", 48, 62)).append(NL);
+        sb.append(new Zeile().links("Refraktionskoeffizient:", 0).zahl("0.13", 48)).append(NL);
+        sb.append(new Zeile().links("Berechnungshorizont:", 0).zahl("0", 48).text("m", 48, 62)).append(NL);
         for (Reduktion.Standpunkt s : red) {
-            sb.append(NL).append("STANDPUNKT ").append(s.name).append("   Instrumentenhöhe ")
-                    .append(Zahl.fmt(s.instrumentenhoehe, 3)).append(" m").append(NL);
-            sb.append("-".repeat(118)).append(NL);
-            sb.append(Zahl.rechts("NR", 6)).append(Zahl.rechts("ZPKT", 15)).append(Zahl.rechts("L", 3))
-                    .append(Zahl.rechts("RICHTUNG", 14)).append(Zahl.rechts("DIFF", 13))
-                    .append(Zahl.rechts("STRECKE", 13)).append(Zahl.rechts("DIFF", 13))
-                    .append(Zahl.rechts("HOEHE", 13)).append(Zahl.rechts("DIFF", 13))
-                    .append(Zahl.rechts("N", 4)).append("  BEMERKUNG").append(NL);
+            sb.append(NL).append(NL);
+            sb.append(new Zeile().text("STANDPUNKT", 0, 14).text(s.name, 14, 34)).append(NL);
+            sb.append("---------------------------------").append(NL).append(NL);
+            sb.append(new Zeile().text("NR", 0, 14).text("ZPKT", 14, 34).text("K", 34, 48).text("RICHTUNG", 48, 62)
+                    .text("DIFF", 62, 76).text("STRECKE", 76, 90).text("DIFF", 90, 104).text("HOEHE", 104, 118)
+                    .text("DIFF", 118, 132).text("NR", 132, 146)).append(NL);
             for (Reduktion.Ziel z : s.ziele) {
                 sb.append(NL);
-                String bem = "Anzahl R/S/H " + z.nRichtung + "/" + z.nStrecke + "/" + z.nHoehe + " von " + z.nGesamt;
+                Zeile m = new Zeile().zahl(Integer.toString(z.nr), 14).text(z.name, 14, 34)
+                        .zahl(Zahl.fmt(z.richtung, sr), 62).zahl(Zahl.fmt(z.strecke, sl), 90)
+                        .zahl(Zahl.fmt(z.hoehe, sl), 118);
                 if (!Double.isNaN(z.zielachsfehler)) {
-                    bem += ", c = " + Zahl.fmt(z.zielachsfehler * 1000, 2) + " mgon angebracht";
+                    m.links("c = " + Zahl.fmt(z.zielachsfehler * 1000, 2).replace('.', ',') + " mgon angebracht", 148);
                 }
-                sb.append(Zahl.rechts(Integer.toString(z.nr), 6)).append(Zahl.rechts(z.name, 15)).append("   ")
-                        .append(Zahl.rechts(Zahl.fmt(z.richtung, sr), 14)).append(" ".repeat(13))
-                        .append(Zahl.rechts(Zahl.fmt(z.strecke, sl), 13)).append(" ".repeat(13))
-                        .append(Zahl.rechts(Zahl.fmt(z.hoehe, sl), 13)).append(" ".repeat(13)).append("    ")
-                        .append("  ").append(bem).append(NL);
+                sb.append(m).append(NL);
+                int n = 0;
                 for (Reduktion.Einzelwert e : z.einzelwerte) {
-                    sb.append(" ".repeat(21)).append(Zahl.rechts(e.lage2 ? "II" : "I", 3))
-                            .append(Zahl.rechts(Zahl.fmt(e.richtung, sr), 14))
-                            .append(Zahl.rechts(diff(e.vRichtung, e.richtungElim, sr), 13))
-                            .append(Zahl.rechts(Zahl.fmt(e.strecke, sl), 13))
-                            .append(Zahl.rechts(diff(e.vStrecke, e.streckeElim, sl), 13))
-                            .append(Zahl.rechts(Zahl.fmt(e.hoehe, sl), 13))
-                            .append(Zahl.rechts(diff(e.vHoehe, e.hoeheElim, sl), 13))
-                            .append(Zahl.rechts(Integer.toString(e.nr), 4))
-                            .append("  ").append(e.datei).append(" Z.").append(e.zeile)
-                            .append(e.hinweis.isEmpty() ? "" : "  " + e.hinweis).append(NL);
+                    n++;
+                    Zeile r = new Zeile();
+                    r.zahl(Zahl.fmt(e.richtung, sr), 62);
+                    einzelDiff(r, e.richtung, e.vRichtung, e.richtungElim, "*** ", 4, sr - 1, 62, 76);
+                    r.zahl(Zahl.fmt(e.strecke, sl), 90);
+                    einzelDiff(r, e.strecke, e.vStrecke, e.streckeElim, "** ", sl, sl, 90, 104);
+                    r.zahl(Zahl.fmt(e.hoehe, sl), 118);
+                    einzelDiff(r, e.hoehe, e.vHoehe, e.hoeheElim, "* ", sl, sl, 118, 132);
+                    r.zahl(Integer.toString(n), 146);
+                    if (!e.hinweis.isEmpty()) {
+                        r.links(e.hinweis, 148);
+                    }
+                    sb.append(r).append(NL);
                 }
             }
         }
         return sb.toString();
     }
 
-    private static String diff(double v, boolean elim, int stellen) {
-        if (Double.isNaN(v)) {
-            return "";
+    private static void einzelDiff(Zeile r, double wert, double v, boolean elim, String marke, int stellenAnzeige,
+            int stellenElim, int von, int bis) {
+        if (Double.isNaN(wert)) {
+            r.text("k.A.", von, bis);
+        } else if (elim) {
+            r.text(marke + komma(v, stellenElim), von, bis);
+        } else {
+            r.zahl(Zahl.fmt(v, stellenAnzeige), bis);
         }
-        return (elim ? "*** " : "") + Zahl.fmt(v, stellen);
     }
 
-    /** Protokoll der Standpunktvereinigung (entspricht JAGMIT.OUT). */
+    /** Protokoll der Standpunktvereinigung (JAGMIT.OUT, Aufbau wie im Excel-Werkzeug). */
     public static String protokollVereinigung(List<Vereinigung.Standpunkt> liste, Parameter par, Messdaten daten) {
         int sl = Reduktion.stellenLaenge(daten.format);
         int sr = Reduktion.stellenRichtung();
-        StringBuilder sb = new StringBuilder(kopf("Standpunktvereinigung", par, daten));
-        sb.append(NL);
-        sb.append("Richtungsdifferenz:   ").append(Zahl.fmt(par.mitRichtung, 5)).append(" gon").append(NL);
-        sb.append("Streckendifferenzen:  ").append(Zahl.fmt(par.mitStrecke, 5)).append(" m").append(NL);
-        sb.append("Höhenunterschiede:    ").append(Zahl.fmt(par.mitHoehe, 5)).append(" m").append(NL);
-        sb.append(NL);
-        sb.append("Spalte K:  2(8) = mit der 2. Aufstellung über 8 gemeinsame Ziele vereinigt").append(NL);
-        sb.append("           OU2  = Orientierungsunterschied der 2. Aufstellung").append(NL);
-        sb.append("DIFF:      Richtung = Verbesserung, Strecke/Höhe = Differenz 1. - weitere Aufstellung").append(NL);
-        sb.append("           n*** = Grenzwert überschritten (Richtung: von der Vereinigung ausgeschlossen)")
-                .append(NL);
-        sb.append("ANZ:       Anzahl verwendeter Messungen Richtung/Strecke/Höhenunterschied").append(NL);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Standpunktvereinigung").append(NL).append(NL);
+        sb.append(new Zeile().links("Richtungsdifferenz:", 0).zahl(Zahl.fmt(par.mitRichtung, 4), 40).text("gon", 40, 50)
+                .links("Erklärung der Spalte 'K'", 63)).append(NL);
+        sb.append(new Zeile().links("Querabweichungen:", 0).zahl("100.1500", 40).text("m", 40, 50)
+                .links("2(8) - zweiter Standpunkt mit (8) gemeinsamen Zielen vereinigt", 63)).append(NL);
+        sb.append(new Zeile().links("Streckendifferenzen:", 0).zahl(Zahl.fmt(par.mitStrecke, 4), 40).text("m", 40, 50)
+                .links("3(5) - dritter Standpunkt mit (5) gemeinsamen Zielen vereinigt", 63)).append(NL);
+        sb.append(new Zeile().links("Höhenunterschiede:", 0).zahl(Zahl.fmt(par.mitHoehe, 4), 40).text("m", 40, 50)
+                .links(" OU2 - Orientierungsunbekannte des zweiten Standpunktes", 63)).append(NL);
         for (Vereinigung.Standpunkt s : liste) {
-            sb.append(NL).append("STANDPUNKT ").append(s.name);
-            if (s.aufstellungen > 1) {
-                sb.append("   (").append(s.aufstellungen).append(" Aufstellungen)");
+            sb.append(NL).append(NL);
+            Zeile k = new Zeile().links("STANDPUNKT", 0).text(s.name, 10, 20);
+            String zusatz = !s.ouExcel.isEmpty() ? s.ouExcel : s.hinweis;
+            if (!zusatz.isEmpty()) {
+                k.links(zusatz, 40);
             }
-            if (!s.orientierung.isEmpty()) {
-                sb.append("   ").append(s.orientierung);
-            }
-            if (!s.hinweis.isEmpty()) {
-                sb.append("   ").append(s.hinweis);
-            }
-            sb.append(NL);
-            sb.append("-".repeat(122)).append(NL);
-            sb.append(Zahl.rechts("NR", 6)).append(Zahl.rechts("ZPKT", 15)).append(Zahl.rechts("K", 12))
-                    .append(Zahl.rechts("RICHTUNG", 14)).append(Zahl.rechts("DIFF", 14))
-                    .append(Zahl.rechts("STRECKE", 13)).append(Zahl.rechts("DIFF", 14))
-                    .append(Zahl.rechts("HOEHE", 13)).append(Zahl.rechts("DIFF", 14))
-                    .append(Zahl.rechts("ANZ", 12)).append(NL);
+            sb.append(k).append(NL);
+            sb.append("---------------------------------").append(NL).append(NL);
+            sb.append(new Zeile().text("NR", 0, 10).text("ZPKT", 10, 20).text("K", 20, 40).text("RICHTUNG", 40, 50)
+                    .text("DIFF", 50, 70).text("STRECKE", 70, 80).text("DIFF", 80, 100).text("HOEHE", 100, 110)
+                    .text("DIFF", 110, 130).text("NR", 130, 140)).append(NL).append(NL);
             for (Vereinigung.Ziel z : s.ziele) {
-                sb.append(Zahl.rechts(Integer.toString(z.nr), 6)).append(Zahl.rechts(z.name, 15))
-                        .append(Zahl.rechts(z.kennung.trim(), 12))
-                        .append(Zahl.rechts(Zahl.fmt(z.richtung, sr), 14)).append(Zahl.rechts(z.vRichtung, 14))
-                        .append(Zahl.rechts(Zahl.fmt(z.strecke, sl), 13)).append(Zahl.rechts(z.dStrecke, 14))
-                        .append(Zahl.rechts(Zahl.fmt(z.hoehe, sl), 13)).append(Zahl.rechts(z.dHoehe, 14))
-                        .append(Zahl.rechts(z.nRichtung + "/" + z.nStrecke + "/" + z.nHoehe, 12)).append(NL);
+                sb.append(new Zeile().zahl(Integer.toString(z.nr), 10).text(z.name, 10, 20)
+                        .text(z.kennung, 20, 40).zahl(Zahl.fmt(z.richtung, sr), 50).text(z.vRichtung, 50, 70)
+                        .zahl(Zahl.fmt(z.strecke, sl), 80).text(z.dStrecke, 80, 100)
+                        .zahl(Zahl.fmt(z.hoehe, sl), 110).text(z.dHoehe, 110, 130)).append(NL);
             }
         }
         return sb.toString();
     }
 
-    /** Anzahl der Anzielungen (entspricht JAGNET.OUT). */
+    /** Anzahl der Anzielungen (JAGNET.OUT, Aufbau wie im Excel-Werkzeug). */
     public static String protokollAnzahl(List<Anzahl.Zeile> zeilen) {
         StringBuilder sb = new StringBuilder();
-        sb.append(Version.titel()).append(NL);
         sb.append("Anzahl der Anzielungen").append(NL).append(NL);
-        sb.append(Zahl.rechts("Punktnummer", 15)).append(Zahl.rechts("Standpunkte", 15))
-                .append(Zahl.rechts("Zielpunkte", 15)).append(Zahl.rechts("Gesamt", 15)).append(NL).append(NL);
-        int unkontrolliert = 0;
+        sb.append(new Zeile().zahl("Punktnummer", 14).text("Standpunkte", 14, 30).text("Zielpunkte", 30, 45)
+                .text("Gesamt", 45, 60)).append(NL).append(NL);
         for (Anzahl.Zeile z : zeilen) {
-            String g = (z.unkontrolliert() ? "*** " : "") + z.gesamt();
+            Zeile r = new Zeile().zahl(z.punkt, 14).zahl(Integer.toString(z.standpunkte), 30)
+                    .zahl(Integer.toString(z.zielpunkte), 45);
             if (z.unkontrolliert()) {
-                unkontrolliert++;
+                r.text("*** " + z.gesamt(), 45, 60);
+            } else {
+                r.zahl(Integer.toString(z.gesamt()), 60);
             }
-            sb.append(Zahl.rechts(z.punkt, 15)).append(Zahl.rechts(Integer.toString(z.standpunkte), 15))
-                    .append(Zahl.rechts(Integer.toString(z.zielpunkte), 15)).append(Zahl.rechts(g, 15)).append(NL);
+            sb.append(r).append(NL);
         }
-        sb.append(NL).append(zeilen.size()).append(" Punkte, davon ").append(unkontrolliert)
-                .append(" nur einmal angezielt (***)").append(NL);
         return sb.toString();
     }
 }

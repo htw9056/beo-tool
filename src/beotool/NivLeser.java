@@ -235,11 +235,13 @@ public final class NivLeser {
 
     /**
      * Felder: Typ/Punkt "KD1 &lt;Punkt&gt;", Werte "Lr/Rb" Rückblick, "Lv/Rf" Vorblick,
-     * "Lz/Rz" Zwischenblick, "HD/E" Zielweite.
+     * "Lz/Rz" Zwischenblick, "HD/E" Zielweite. Eine Punktnummer mit "#####" ist eine verworfene
+     * Messung; die folgende Wiederholung mit Punktnummer "?" erhält deren Punktnummer.
      */
     private static List<Ablesung> dat(List<String> zeilen, String datei, List<String> hinweise) {
         List<Ablesung> liste = new ArrayList<>();
         int nr = 0;
+        String wiederholt = null;
         for (String roh : zeilen) {
             nr++;
             if (!roh.contains("|")) {
@@ -258,6 +260,18 @@ public final class NivLeser {
                 continue;
             }
             String punkt = t[0];
+            if (punkt.contains("#####")) {
+                // vom Instrument verworfene Messung, die Wiederholung folgt mit Punktnummer "?"
+                wiederholt = punkt.replace("#", "");
+                continue;
+            }
+            if (punkt.equals("?")) {
+                if (wiederholt == null) {
+                    hinweise.add(datei + " Zeile " + nr + ": Wiederholungsmessung ohne Punktnummer übersprungen.");
+                    continue;
+                }
+                punkt = wiederholt;
+            }
             Art art = null;
             double wert = Double.NaN;
             double hd = Double.NaN;
