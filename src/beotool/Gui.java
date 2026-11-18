@@ -140,10 +140,21 @@ public final class Gui {
             }
         });
 
-        JPanel links = eingaben();
-        JScrollPane linksScroll = new JScrollPane(links);
-        linksScroll.getVerticalScrollBar().setUnitIncrement(16);
-        linksScroll.setBorder(null);
+        JScrollPane eingabeScroll = new JScrollPane(eingaben());
+        eingabeScroll.getVerticalScrollBar().setUnitIncrement(16);
+        eingabeScroll.setBorder(null);
+        // Berechnen-Knöpfe immer sichtbar unter den Eingaben
+        JPanel knoepfe = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        rechnen.setFont(rechnen.getFont().deriveFont(Font.BOLD));
+        rechnen.setToolTipText("Berechnen und alle Ausgabedateien schreiben (F5)");
+        rechnen.addActionListener(e -> starten(true));
+        nurRechnen.setToolTipText("Nur berechnen und anzeigen, keine Dateien schreiben");
+        nurRechnen.addActionListener(e -> starten(false));
+        knoepfe.add(rechnen);
+        knoepfe.add(nurRechnen);
+        JPanel linksScroll = new JPanel(new BorderLayout());
+        linksScroll.add(eingabeScroll, BorderLayout.CENTER);
+        linksScroll.add(knoepfe, BorderLayout.SOUTH);
 
         reiter.addTab("Ergebnis", new JScrollPane(zusammenfassung));
         reiter.addTab("Reduktion", new JScrollPane(reduktion));
@@ -292,14 +303,6 @@ public final class Gui {
         zeile(neu, 1, "Hochwert:", neuX);
         p.add(neu);
 
-        JPanel knoepfe = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        rechnen.setFont(rechnen.getFont().deriveFont(Font.BOLD));
-        rechnen.addActionListener(e -> starten(true));
-        nurRechnen.addActionListener(e -> starten(false));
-        knoepfe.add(rechnen);
-        knoepfe.add(nurRechnen);
-        knoepfe.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-        p.add(knoepfe);
         p.add(Box.createVerticalGlue());
 
         format.addActionListener(e -> formatGeaendert());

@@ -1,4 +1,4 @@
 Main-Class: beotool.Main
 Implementation-Title: beo-tool
-Implementation-Version: 0.01
+Implementation-Version: 0.02
 Implementation-Vendor: Dipl.-Ing. (FH) Stefan Klein
