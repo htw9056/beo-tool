@@ -27,6 +27,7 @@ public final class Auswertung {
         public List<Vereinigung.Standpunkt> vereinigung;
         public List<Anzahl.Zeile> anzahl;
         public Ausgabe.Punkte punkte;
+        public Parameter par;
         public final List<String> hinweise = new ArrayList<>();
         /** Dateiname -> Inhalt, in Ausgabereihenfolge. */
         public final Map<String, String> dateien = new LinkedHashMap<>();
@@ -61,6 +62,9 @@ public final class Auswertung {
                         .append(punkte.unbenutzt.size()).append(" nicht verwendet\n");
                 sb.append("Neupunkte:          ").append(punkte.neu.size()).append("\n");
             }
+            if (par != null) {
+                sb.append(Uebersicht.verbesserungen(this));
+            }
             if (ordner != null) {
                 sb.append("\nAusgabeordner: ").append(ordner).append("\n");
                 for (Path p : geschrieben) {
@@ -86,6 +90,7 @@ public final class Auswertung {
             throw new IOException("Keine Messdatei gewählt.");
         }
         Ergebnis e = new Ergebnis();
+        e.par = par;
         List<Path> pfade = new ArrayList<>();
         for (String s : par.messdateien) {
             Path p = Paths.get(s);
