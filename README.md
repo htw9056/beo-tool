@@ -29,6 +29,15 @@ Eine Java-Installation ist nicht nötig, die Java-Laufzeit ist im Paket enthalte
 
 Ausführliche Beschreibung: [Handbuch](src/beotool/hilfe/hilfe.html) (im Programm mit F1).
 
+## Exportvorlagen für die Feldrechner
+
+Im Ordner [`vorlagen`](vorlagen) liegen Vorlagen, mit denen die Feldrechner die Messungen direkt als
+NEPTAN-Beobachtungsdatei (`*.beo`) exportieren:
+
+- **Trimble Access:** [`vorlagen/Trimble/Neptan.xsl`](vorlagen/Trimble/Neptan.xsl) – Anleitung in
+  [`vorlagen/LIESMICH.md`](vorlagen/LIESMICH.md)
+- **Leica:** folgt
+
 ## Aufruf in der Eingabeaufforderung
 
 ```

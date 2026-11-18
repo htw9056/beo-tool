@@ -31,6 +31,7 @@ app\beo-tool.jar          Programm (laeuft auch mit installiertem Java 17+)
 runtime\                  Java-Laufzeit (Eclipse Temurin, GPLv2 mit Classpath
                           Exception, Lizenzen in runtime\legal)
 beispiele\                Beispieldaten
+vorlagen\                 Exportvorlagen fuer die Feldrechner (Trimble Neptan.xsl)
 Handbuch.html             ausfuehrliche Anleitung (auch im Programm: F1)
 DRITTANBIETER.txt         Lizenzen der mitgelieferten Java- und Go-Laufzeit
 

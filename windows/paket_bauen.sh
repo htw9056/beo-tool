@@ -39,6 +39,7 @@ rm -f rsrc_windows_amd64.syso
 cd ../..
 
 cp -r beispiele "$ZIEL/"
+cp -r vorlagen "$ZIEL/"
 cp LICENSE "$ZIEL/LIZENZ.txt"
 cp windows/LIESMICH.txt "$ZIEL/"
 cp windows/DRITTANBIETER.txt "$ZIEL/"
