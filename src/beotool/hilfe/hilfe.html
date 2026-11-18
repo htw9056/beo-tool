@@ -35,7 +35,8 @@ Nivellementdaten (Leica GSI, Trimble DAT) für die Netzausgleichung mit <b>Jag3D
 <li>Reduktion der Messwerte je Standpunkt (Mittel aus Lagen und Sätzen mit Ausreißerelimination)</li>
 <li>Standpunktvereinigung gleichnamiger Standpunkte</li>
 <li>Anzahl der Anzielungen je Punkt</li>
-<li>Ausgabe der reduzierten Beobachtungen sowie der Fest- und Neupunkte für 1D, 2D oder 3D</li>
+<li>Ausgabe der reduzierten Beobachtungen sowie der Fest- und Neupunkte für 1D, 2D oder 3D,
+wahlweise als gemittelte 3D-Originalbeobachtungen (Satzart 20.)</li>
 </ul>
 <p>Das Programm ersetzt das Excel-Werkzeug „Konvertierung für Jag3D“ und schreibt dieselben Dateien.</p>
 
@@ -49,7 +50,8 @@ Das Format wird aus der Dateiendung übernommen. Mehrere Dateien werden nacheina
 Eine NEPTAN-Beobachtungsdatei (*.beo) wird für sich allein ausgewertet; GSI- und DAT-Dateien können
 gemeinsam ausgewertet werden.</li>
 <li>Festpunktdateien hinzufügen (optional, ebenso wie die Messdateien).</li>
-<li>Ausgleichungsart wählen: <code>1D_(Höhe)</code>, <code>2D_(Lage)</code> oder <code>3D_(Lage&amp;Höhe)</code>.</li>
+<li>Ausgleichungsart wählen: <code>1D_(Höhe)</code>, <code>2D_(Lage)</code>, <code>3D_(Lage&amp;Höhe)</code> oder
+<code>3D_(Originalbeobachtungen, Satzart 20.)</code>.</li>
 <li>Sonderfunktionen und Grenzwerte prüfen.</li>
 <li><b>Berechnen und Dateien schreiben</b> (F5). Die Ergebnisse stehen in den Registern rechts,
 die Dateien im Ausgabeordner (leer = Ordner der ersten Messdatei; der Pfad kann direkt in das Feld
@@ -113,6 +115,22 @@ Abweichung vom Mittel eliminiert, solange diese den Grenzwert erreicht oder übe
 Messungen (R/S/H) und alle Einzelwerte mit DIFF = Mittel − Einzelwert; eliminierte Werte sind mit
 <code>***</code> markiert.</p>
 
+<h3>3D-Originalbeobachtungen (Satzart 20.)</h3>
+<p>Bei dieser Ausgleichungsart werden zusätzlich Schrägstrecke und Zenitwinkel gemittelt. Jag3D rechnet
+Horizontalstrecke und Höhenunterschied dann selbst, mit Erdkrümmung und Refraktion und mit der
+richtigen Gewichtung von Strecke und Zenitwinkel.</p>
+<ul>
+<li>Zenitwinkel in Lage II werden mit 400 − z auf Lage I umgerechnet.</li>
+<li><b>Höhenindexfehler:</b> i = Mittel über alle in beiden Lagen gemessenen Ziele von
+(z<sub>I</sub> − (400 − z<sub>II</sub>)) / 2. Er wird vor der Prüfung angebracht (Lage I − i, Lage II + i)
+und im Protokoll je Standpunkt ausgegeben. Sonst würde bei einem Indexfehler in der Größenordnung des
+Grenzwertes eine ganze Lage eliminiert und der Mittelwert um den Indexfehler verfälscht.</li>
+<li>Grenzwert Zenitwinkeldifferenz: Vorgabe 0.0050 gon; Schrägstrecken mit dem Grenzwert der Strecke.</li>
+<li>Gemittelt wird je Ziel <b>und Reflektorhöhe</b>; verschiedene Reflektorhöhen ergeben getrennte Zeilen.</li>
+<li>Ausgegeben werden Satz <code>10.</code> mit der echten Instrumentenhöhe und Sätze <code>20.</code>
+mit Schrägstrecke, Richtung, Zenitwinkel und Reflektorhöhe.</li>
+</ul>
+
 <h2><a name="vereinigung">Standpunktvereinigung</a></h2>
 <p>Kommt ein Standpunkt mehrfach vor, werden die weiteren Aufstellungen in die erste übernommen:</p>
 <ol>
@@ -124,6 +142,10 @@ Aufstellungen (die dritte Aufstellung zählt ein Drittel). Fehlt ein Wert in ein
 vorhandene übernommen, er wird nicht mit 0 gemittelt. Richtungen werden über 0/400 gon korrekt gemittelt.</li>
 <li>Die übrigen Ziele der weiteren Aufstellung werden mit Richtung + OU angefügt.</li>
 </ol>
+<p>Bei Originalbeobachtungen werden nur Aufstellungen mit gleicher Instrumentenhöhe (± 0,5 mm)
+vereinigt, sonst bleiben sie getrennt und erhalten in Jag3D eine eigene Orientierung. Gemittelt werden
+nur Ziele mit gleicher Reflektorhöhe; Zenitwinkel über dem Grenzwert (Vorgabe 0.0050 gon) werden
+markiert.</p>
 <p>Ohne gemeinsame Ziele bleiben die Aufstellungen getrennt (Hinweis „Prüfung notwendig“).
 Streckendifferenzen und Höhenunterschiede über dem Grenzwert werden mit <code>n***</code> markiert,
 die Werte werden trotzdem gemittelt.</p>
@@ -148,6 +170,9 @@ er angezielt wurde. Punkte mit insgesamt nur einer Anzielung sind nicht kontroll
 <tr><td><code>Lagemessung_reduzierte_Werte_&lt;Art&gt;_für_Jag3D.BEO</code></td>
 <td>2D/3D: reduzierte Beobachtungen, Satzart <code>50.</code> mit Horizontalstrecke, Richtung und
 (nur 3D) Höhenunterschied; Instrumenten- und Reflektorhöhe 0. Import in Jag3D als „Beo (Neptan)“.</td></tr>
+<tr><td><code>Originalbeobachtungen_3D_für_Jag3D.BEO</code></td>
+<td>3D-Originalbeobachtungen: Satzart <code>20.</code> mit Schrägstrecke, Richtung, Zenitwinkel und
+Reflektorhöhe, Satz <code>10.</code> mit Instrumentenhöhe. Import in Jag3D als „Beo (Neptan)“.</td></tr>
 <tr><td><code>Höhenmessung.NIV</code></td>
 <td>1D: Standpunkt, Ziel, Instrumentenhöhe, Zieltafelhöhe, Messwert, Strecke (Jag3D-Textimport
 „Nivellement“). Nivellement: virtueller Standpunkt, Lattenablesung als Zieltafelhöhe, Messwert 0.</td></tr>
@@ -167,7 +192,8 @@ Zahlen werden mit Dezimalpunkt geschrieben, Zeichensatz Windows (ANSI).</p>
 beo-tool-konsole.exe [Optionen] Messdatei [Messdatei ...]
 
   -f beo|gsi|dat        Messdatenformat (Vorgabe: nach Dateiendung)
-  -a 1D|2D|3D           Ausgleichungsart (Vorgabe: 2D, bei gsi/dat 1D)
+  -a 1D|2D|3D|3DO       Ausgleichungsart (Vorgabe: 2D, bei gsi/dat 1D);
+                        3DO = gemittelte Originalbeobachtungen (Satzart 20.)
   -p Datei              Festpunktdatei (mehrfach möglich)
   -o Ordner             Ausgabeordner
   --hauptpolygon        nur Beobachtungen zwischen Standpunkten (beo)
@@ -176,8 +202,8 @@ beo-tool-konsole.exe [Optionen] Messdatei [Messdatei ...]
   --nullen              führende Nullen löschen (gsi/dat)
   --zaehler n           Beginn Zählernummer (gsi/dat)
   --neupunkt Y,X        Rechts- und Hochwert der Neupunkte bei 1D
-  --red R,S,H           Grenzwerte Reduktion
-  --mit R,S,H           Grenzwerte Standpunktvereinigung
+  --red R,S,H[,Z]       Grenzwerte Reduktion (Z = Zenitwinkel, nur 3DO)
+  --mit R,S,H[,Z]       Grenzwerte Standpunktvereinigung
   -n                    nur rechnen, keine Dateien schreiben
 </pre>
 <p>Beispiel: <code>beo-tool-konsole.exe -a 3D -p BTFEST.PKT 20240603_FPF.beo</code></p>

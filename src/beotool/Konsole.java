@@ -18,7 +18,8 @@ public final class Konsole {
         o.println("Aufruf: beo-tool-konsole [Optionen] Messdatei [Messdatei ...]");
         o.println();
         o.println("  -f beo|gsi|dat        Messdatenformat (Vorgabe: nach Dateiendung)");
-        o.println("  -a 1D|2D|3D           Ausgleichungsart (Vorgabe: 2D, bei gsi/dat 1D)");
+        o.println("  -a 1D|2D|3D|3DO       Ausgleichungsart (Vorgabe: 2D, bei gsi/dat 1D);");
+        o.println("                        3DO = gemittelte Originalbeobachtungen (Satzart 20.)");
         o.println("  -p Datei              Festpunktdatei (mehrfach möglich)");
         o.println("  -o Ordner             Ausgabeordner (Vorgabe: Ordner der ersten Messdatei)");
         o.println("  --hauptpolygon        nur Beobachtungen zwischen Standpunkten verwenden (beo)");
@@ -27,8 +28,8 @@ public final class Konsole {
         o.println("  --nullen              führende Nullen der Punktnummern löschen (gsi/dat)");
         o.println("  --zaehler n           Beginn Zählernummer der Aufstellungen (gsi/dat, Vorgabe 1)");
         o.println("  --neupunkt Y,X        Rechts- und Hochwert der Neupunkte bei 1D");
-        o.println("  --red R,S,H           Grenzwerte Reduktion: Richtung [gon], Strecke [m], Höhe [m]");
-        o.println("  --mit R,S,H           Grenzwerte Standpunktvereinigung: Richtung [gon], Strecke [m], Höhe [m]");
+        o.println("  --red R,S,H[,Z]       Grenzwerte Reduktion: Richtung [gon], Strecke [m], Höhe [m], Zenit [gon]");
+        o.println("  --mit R,S,H[,Z]       Grenzwerte Standpunktvereinigung: Richtung, Strecke, Höhe, Zenit");
         o.println("  -n                    nur rechnen und anzeigen, keine Dateien schreiben");
         o.println("  -h                    diese Hilfe");
     }
@@ -92,6 +93,9 @@ public final class Konsole {
                         par.redStrecke = w[1];
                         par.redHoehe = w[2];
                         par.redHoeheNiv = w[2];
+                        if (w.length > 3) {
+                            par.redZenit = w[3];
+                        }
                         break;
                     }
                     case "--mit": {
@@ -99,6 +103,9 @@ public final class Konsole {
                         par.mitRichtung = w[0];
                         par.mitStrecke = w[1];
                         par.mitHoehe = w[2];
+                        if (w.length > 3) {
+                            par.mitZenit = w[3];
+                        }
                         break;
                     }
                     case "-n":
@@ -170,6 +177,8 @@ public final class Konsole {
                 return Parameter.Ausgleichungsart.D2;
             case "3D":
                 return Parameter.Ausgleichungsart.D3;
+            case "3DO":
+                return Parameter.Ausgleichungsart.D3O;
             default:
                 throw new IllegalArgumentException("Unbekannte Ausgleichungsart: " + s);
         }
@@ -177,9 +186,13 @@ public final class Konsole {
 
     private static double[] drei(String s) {
         String[] t = s.split("[,;]");
-        if (t.length != 3) {
-            throw new IllegalArgumentException("Drei Werte erwartet: " + s);
+        if (t.length != 3 && t.length != 4) {
+            throw new IllegalArgumentException("Drei oder vier Werte erwartet: " + s);
         }
-        return new double[] {Zahl.lies(t[0]), Zahl.lies(t[1]), Zahl.lies(t[2])};
+        double[] w = new double[t.length];
+        for (int i = 0; i < t.length; i++) {
+            w[i] = Zahl.lies(t[i]);
+        }
+        return w;
     }
 }

@@ -41,12 +41,14 @@ ERSTE SCHRITTE
 1. Messdateien hinzufuegen (*.beo, *.gsi, *.dat), in das Fenster ziehen oder
    einen kopierten Pfad mit "Pfad einfuegen" bzw. Strg+V in der Liste einfuegen
 2. Festpunktdateien hinzufuegen (*.pkt), optional
-3. Ausgleichungsart (1D/2D/3D) und Grenzwerte pruefen
+3. Ausgleichungsart (1D/2D/3D oder 3D-Originalbeobachtungen) und
+   Grenzwerte pruefen
 4. "Berechnen und Dateien schreiben" (F5)
 
 Die Ergebnisdateien stehen im Ausgabeordner (Vorgabe: Ordner der ersten
 Messdatei):
     Lagemessung_reduzierte_Werte_<Art>_für_Jag3D.BEO  bzw.  Höhenmessung.NIV
+    bzw.  Originalbeobachtungen_3D_für_Jag3D.BEO  (Satzart 20.)
     Festpunkte_<Art>_fuer_Jag3D.AltPkt
     Neupunkte_<Art>_fuer_Jag3D.NeuPkt
     nicht_verwendete_Festpunkte_<Art>.DelPkt

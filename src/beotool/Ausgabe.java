@@ -42,6 +42,49 @@ public final class Ausgabe {
         return sb.toString();
     }
 
+    /**
+     * Gemittelte Originalbeobachtungen (Satzart 20) für Jag3D: Schrägstrecke, Richtung,
+     * Zenitwinkel (Lage I) mit Instrumenten- und Reflektorhöhe. Jag3D rechnet Horizontalstrecke und
+     * Höhenunterschied selbst (mit Erdkrümmung und Refraktion).
+     */
+    public static String originalmessung(List<Vereinigung.Standpunkt> liste, int sl) {
+        StringBuilder sb = new StringBuilder();
+        int sr = Reduktion.stellenRichtung();
+        for (Vereinigung.Standpunkt s : liste) {
+            sb.append(Zahl.rechts("10.", 5)).append(Zahl.rechts("0.0", 10)).append(Zahl.rechts(s.name, 15))
+                    .append(" ".repeat(19 + 16 + 15)).append(Zahl.rechts(Zahl.fmt(s.instrumentenhoehe, 3), 14))
+                    .append(NL);
+            for (Vereinigung.Ziel z : s.ziele) {
+                if (Double.isNaN(z.schraeg) && Double.isNaN(z.richtung) && Double.isNaN(z.zenit)) {
+                    continue;
+                }
+                sb.append(Zahl.rechts("20.", 5)).append(Zahl.rechts("0.0", 10)).append(Zahl.rechts(z.name, 15))
+                        .append(Zahl.rechts(Zahl.fmt(z.schraeg, sl), 19))
+                        .append(Zahl.rechts(Zahl.fmt(z.richtung, sr), 16))
+                        .append(Zahl.rechts(Zahl.fmt(z.zenit, sr), 15))
+                        .append(Zahl.rechts(Zahl.fmt(Double.isNaN(z.reflektorhoehe) ? 0 : z.reflektorhoehe, 3), 14))
+                        .append(NL);
+            }
+        }
+        return sb.toString();
+    }
+
+    public static String originalmessungName(Parameter par) {
+        return "Originalbeobachtungen_3D_für_Jag3D" + par.hauptpolygonZusatz() + ".BEO";
+    }
+
+    /** Name der Beobachtungsdatei je Ausgleichungsart. */
+    public static String beobachtungenName(Parameter par) {
+        switch (par.art) {
+            case D1:
+                return hoehenmessungName();
+            case D3O:
+                return originalmessungName(par);
+            default:
+                return lagemessungName(par);
+        }
+    }
+
     public static String lagemessungName(Parameter par) {
         return "Lagemessung_reduzierte_Werte_" + par.art.text + "_für_Jag3D" + par.hauptpolygonZusatz() + ".BEO";
     }
@@ -274,6 +317,7 @@ public final class Ausgabe {
     public static String protokollReduktion(List<Reduktion.Standpunkt> red, Parameter par, Messdaten daten) {
         int sl = Reduktion.stellenLaenge(daten.format);
         int sr = Reduktion.stellenRichtung();
+        boolean og = par.art.original() && !daten.format.istNivellement();
         StringBuilder sb = new StringBuilder();
         sb.append("Reduktion von Messwerten").append(NL).append(NL);
         sb.append(new Zeile().links("Richtungsdifferenz:", 0).zahl(Zahl.fmt(par.redRichtung, 4), 48).text("gon", 48, 62))
@@ -282,22 +326,40 @@ public final class Ausgabe {
                 .append(NL);
         sb.append(new Zeile().links("Höhenunterschieddifferenz:", 0).zahl(Zahl.fmt(par.redHoeheWirksam(), 4), 48)
                 .text("m", 48, 62)).append(NL);
+        if (og) {
+            sb.append(new Zeile().links("Zenitwinkeldifferenz:", 0).zahl(Zahl.fmt(par.redZenit, 4), 48)
+                    .text("gon", 48, 62)).append(NL);
+        }
         sb.append(new Zeile().links("Additionskonstante:", 0).zahl("0", 48).text("m", 48, 62)).append(NL);
         sb.append(new Zeile().links("Kippachsunterschied:", 0).zahl("0", 48).text("m", 48, 62)).append(NL);
         sb.append(new Zeile().links("Refraktionskoeffizient:", 0).zahl("0.13", 48)).append(NL);
         sb.append(new Zeile().links("Berechnungshorizont:", 0).zahl("0", 48).text("m", 48, 62)).append(NL);
         for (Reduktion.Standpunkt s : red) {
             sb.append(NL).append(NL);
-            sb.append(new Zeile().text("STANDPUNKT", 0, 14).text(s.name, 14, 34)).append(NL);
+            Zeile kopf = new Zeile().text("STANDPUNKT", 0, 14).text(s.name, 14, 34);
+            if (og) {
+                kopf.links("ih = " + Zahl.fmt(s.instrumentenhoehe, 3) + " m", 48);
+                if (!Double.isNaN(s.hoehenindex)) {
+                    kopf.links("Höhenindexfehler i = " + Zahl.fmt(s.hoehenindex * 1000, 2).replace('.', ',')
+                            + " mgon angebracht", 76);
+                }
+            }
+            sb.append(kopf).append(NL);
             sb.append("---------------------------------").append(NL).append(NL);
-            sb.append(new Zeile().text("NR", 0, 14).text("ZPKT", 14, 34).text("K", 34, 48).text("RICHTUNG", 48, 62)
-                    .text("DIFF", 62, 76).text("STRECKE", 76, 90).text("DIFF", 90, 104).text("HOEHE", 104, 118)
-                    .text("DIFF", 118, 132).text("NR", 132, 146)).append(NL);
+            sb.append(new Zeile().text("NR", 0, 14).text("ZPKT", 14, 34).text(og ? "TH" : "K", 34, 48)
+                    .text("RICHTUNG", 48, 62).text("DIFF", 62, 76).text(og ? "SCHRAEGST." : "STRECKE", 76, 90)
+                    .text("DIFF", 90, 104).text(og ? "ZENIT" : "HOEHE", 104, 118).text("DIFF", 118, 132)
+                    .text("NR", 132, 146)).append(NL);
             for (Reduktion.Ziel z : s.ziele) {
                 sb.append(NL);
-                Zeile m = new Zeile().zahl(Integer.toString(z.nr), 14).text(z.name, 14, 34)
-                        .zahl(Zahl.fmt(z.richtung, sr), 62).zahl(Zahl.fmt(z.strecke, sl), 90)
-                        .zahl(Zahl.fmt(z.hoehe, sl), 118);
+                Zeile m = new Zeile().zahl(Integer.toString(z.nr), 14).text(z.name, 14, 34);
+                if (og) {
+                    m.zahl(Zahl.fmt(z.reflektorhoehe, 3), 48).zahl(Zahl.fmt(z.richtung, sr), 62)
+                            .zahl(Zahl.fmt(z.schraeg, sl), 90).zahl(Zahl.fmt(z.zenit, sr), 118);
+                } else {
+                    m.zahl(Zahl.fmt(z.richtung, sr), 62).zahl(Zahl.fmt(z.strecke, sl), 90)
+                            .zahl(Zahl.fmt(z.hoehe, sl), 118);
+                }
                 if (!Double.isNaN(z.zielachsfehler)) {
                     m.links("c = " + Zahl.fmt(z.zielachsfehler * 1000, 2).replace('.', ',') + " mgon angebracht", 148);
                 }
@@ -308,10 +370,17 @@ public final class Ausgabe {
                     Zeile r = new Zeile();
                     r.zahl(Zahl.fmt(e.richtung, sr), 62);
                     einzelDiff(r, e.richtung, e.vRichtung, e.richtungElim, "*** ", 4, sr - 1, 62, 76);
-                    r.zahl(Zahl.fmt(e.strecke, sl), 90);
-                    einzelDiff(r, e.strecke, e.vStrecke, e.streckeElim, "** ", sl, sl, 90, 104);
-                    r.zahl(Zahl.fmt(e.hoehe, sl), 118);
-                    einzelDiff(r, e.hoehe, e.vHoehe, e.hoeheElim, "* ", sl, sl, 118, 132);
+                    if (og) {
+                        r.zahl(Zahl.fmt(e.schraeg, sl), 90);
+                        einzelDiff(r, e.schraeg, e.vSchraeg, e.schraegElim, "** ", sl, sl, 90, 104);
+                        r.zahl(Zahl.fmt(e.zenit, sr), 118);
+                        einzelDiff(r, e.zenit, e.vZenit, e.zenitElim, "* ", 4, sr - 1, 118, 132);
+                    } else {
+                        r.zahl(Zahl.fmt(e.strecke, sl), 90);
+                        einzelDiff(r, e.strecke, e.vStrecke, e.streckeElim, "** ", sl, sl, 90, 104);
+                        r.zahl(Zahl.fmt(e.hoehe, sl), 118);
+                        einzelDiff(r, e.hoehe, e.vHoehe, e.hoeheElim, "* ", sl, sl, 118, 132);
+                    }
                     r.zahl(Integer.toString(n), 146);
                     if (!e.hinweis.isEmpty()) {
                         r.links(e.hinweis, 148);
@@ -338,6 +407,7 @@ public final class Ausgabe {
     public static String protokollVereinigung(List<Vereinigung.Standpunkt> liste, Parameter par, Messdaten daten) {
         int sl = Reduktion.stellenLaenge(daten.format);
         int sr = Reduktion.stellenRichtung();
+        boolean og = par.art.original() && !daten.format.istNivellement();
         StringBuilder sb = new StringBuilder();
         sb.append("Standpunktvereinigung").append(NL).append(NL);
         sb.append(new Zeile().links("Richtungsdifferenz:", 0).zahl(Zahl.fmt(par.mitRichtung, 4), 40).text("gon", 40, 50)
@@ -348,6 +418,10 @@ public final class Ausgabe {
                 .links("3(5) - dritter Standpunkt mit (5) gemeinsamen Zielen vereinigt", 63)).append(NL);
         sb.append(new Zeile().links("Höhenunterschiede:", 0).zahl(Zahl.fmt(par.mitHoehe, 4), 40).text("m", 40, 50)
                 .links(" OU2 - Orientierungsunbekannte des zweiten Standpunktes", 63)).append(NL);
+        if (og) {
+            sb.append(new Zeile().links("Zenitwinkel:", 0).zahl(Zahl.fmt(par.mitZenit, 4), 40).text("gon", 40, 50)
+                    .links("Originalbeobachtungen: Schrägstrecke und Zenitwinkel (Lage I)", 63)).append(NL);
+        }
         for (Vereinigung.Standpunkt s : liste) {
             sb.append(NL).append(NL);
             Zeile k = new Zeile().links("STANDPUNKT", 0).text(s.name, 10, 20);
@@ -358,13 +432,21 @@ public final class Ausgabe {
             sb.append(k).append(NL);
             sb.append("---------------------------------").append(NL).append(NL);
             sb.append(new Zeile().text("NR", 0, 10).text("ZPKT", 10, 20).text("K", 20, 40).text("RICHTUNG", 40, 50)
-                    .text("DIFF", 50, 70).text("STRECKE", 70, 80).text("DIFF", 80, 100).text("HOEHE", 100, 110)
-                    .text("DIFF", 110, 130).text("NR", 130, 140)).append(NL).append(NL);
+                    .text("DIFF", 50, 70).text(og ? "SCHRAEGST." : "STRECKE", 70, 80).text("DIFF", 80, 100)
+                    .text(og ? "ZENIT" : "HOEHE", 100, 110).text("DIFF", 110, 130).text(og ? "TH" : "NR", 130, 140))
+                    .append(NL).append(NL);
             for (Vereinigung.Ziel z : s.ziele) {
-                sb.append(new Zeile().zahl(Integer.toString(z.nr), 10).text(z.name, 10, 20)
-                        .text(z.kennung, 20, 40).zahl(Zahl.fmt(z.richtung, sr), 50).text(z.vRichtung, 50, 70)
-                        .zahl(Zahl.fmt(z.strecke, sl), 80).text(z.dStrecke, 80, 100)
-                        .zahl(Zahl.fmt(z.hoehe, sl), 110).text(z.dHoehe, 110, 130)).append(NL);
+                Zeile r = new Zeile().zahl(Integer.toString(z.nr), 10).text(z.name, 10, 20)
+                        .text(z.kennung, 20, 40).zahl(Zahl.fmt(z.richtung, sr), 50).text(z.vRichtung, 50, 70);
+                if (og) {
+                    r.zahl(Zahl.fmt(z.schraeg, sl), 80).text(z.dSchraeg, 80, 100)
+                            .zahl(Zahl.fmt(z.zenit, sr), 110).text(z.dZenit, 110, 130)
+                            .zahl(Zahl.fmt(z.reflektorhoehe, 3), 140);
+                } else {
+                    r.zahl(Zahl.fmt(z.strecke, sl), 80).text(z.dStrecke, 80, 100)
+                            .zahl(Zahl.fmt(z.hoehe, sl), 110).text(z.dHoehe, 110, 130);
+                }
+                sb.append(r).append(NL);
             }
         }
         return sb.toString();

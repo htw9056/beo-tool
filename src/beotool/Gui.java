@@ -81,6 +81,8 @@ public final class Gui {
     private final JTextField redS = feld();
     private final JTextField redH = feld();
     private final JLabel redHText = new JLabel();
+    private final JTextField redZ = feld();
+    private final JTextField mitZ = feld();
     private final JTextField mitR = feld();
     private final JTextField mitS = feld();
     private final JTextField mitH = feld();
@@ -290,12 +292,14 @@ public final class Gui {
         zeile(red, 0, "Richtungsdifferenz [gon]:", redR);
         zeile(red, 1, "Streckendifferenz [m]:", redS);
         zeile(red, 2, redHText, redH);
+        zeile(red, 3, "Zenitwinkeldifferenz [gon]:", redZ);
         p.add(red);
 
         JPanel mit = gruppe("Standpunktvereinigung (Grenzwerte)");
         zeile(mit, 0, "Richtungsdifferenz [gon]:", mitR);
         zeile(mit, 1, "Streckendifferenzen [m]:", mitS);
         zeile(mit, 2, "Höhenunterschiede [m]:", mitH);
+        zeile(mit, 3, "Zenitwinkel [gon]:", mitZ);
         p.add(mit);
 
         JPanel neu = gruppe("Neupunkte bei 1D (leer = größter Wert + 100 m)");
@@ -306,6 +310,9 @@ public final class Gui {
         p.add(Box.createVerticalGlue());
 
         format.addActionListener(e -> formatGeaendert());
+        art.addActionListener(e -> formatGeaendert());
+        redZ.setToolTipText("Nur bei Ausgabe als Originalbeobachtungen (Satzart 20.)");
+        mitZ.setToolTipText("Nur bei Ausgabe als Originalbeobachtungen (Satzart 20.)");
         return p;
     }
 
@@ -402,6 +409,10 @@ public final class Gui {
         zaehler.setEnabled(niv);
         redHText.setText(niv ? "Höhenunterschieddifferenz Niv. [m]:" : "Höhenunterschieddifferenz [m]:");
         redH.setText(Zahl.kurz(niv ? par.redHoeheNiv : par.redHoehe, 6));
+        Parameter.Ausgleichungsart a = (Parameter.Ausgleichungsart) art.getSelectedItem();
+        boolean og = a != null && a.original() && !niv;
+        redZ.setEnabled(og);
+        mitZ.setEnabled(og);
     }
 
     private void uebernehmenInMaske() {
@@ -422,6 +433,8 @@ public final class Gui {
         mitR.setText(Zahl.kurz(par.mitRichtung, 6));
         mitS.setText(Zahl.kurz(par.mitStrecke, 6));
         mitH.setText(Zahl.kurz(par.mitHoehe, 6));
+        redZ.setText(Zahl.kurz(par.redZenit, 6));
+        mitZ.setText(Zahl.kurz(par.mitZenit, 6));
         neuY.setText(Double.isNaN(par.neupunktY) ? "" : Zahl.kurz(par.neupunktY, 3));
         neuX.setText(Double.isNaN(par.neupunktX) ? "" : Zahl.kurz(par.neupunktX, 3));
         formatGeaendert();
@@ -457,6 +470,8 @@ public final class Gui {
             par.mitRichtung = positiv(mitR, "Richtungsdifferenz (Standpunktvereinigung)");
             par.mitStrecke = positiv(mitS, "Streckendifferenzen (Standpunktvereinigung)");
             par.mitHoehe = positiv(mitH, "Höhenunterschiede (Standpunktvereinigung)");
+            par.redZenit = positiv(redZ, "Zenitwinkeldifferenz (Reduktion)");
+            par.mitZenit = positiv(mitZ, "Zenitwinkel (Standpunktvereinigung)");
             par.neupunktY = optional(neuY, "Rechtswert Neupunkte");
             par.neupunktX = optional(neuX, "Hochwert Neupunkte");
         } catch (IllegalArgumentException e) {
@@ -493,6 +508,10 @@ public final class Gui {
         par.mitRichtung = v.mitRichtung;
         par.mitStrecke = v.mitStrecke;
         par.mitHoehe = v.mitHoehe;
+        par.redZenit = v.redZenit;
+        par.mitZenit = v.mitZenit;
+        redZ.setText(Zahl.kurz(par.redZenit, 6));
+        mitZ.setText(Zahl.kurz(par.mitZenit, 6));
         redR.setText(Zahl.kurz(par.redRichtung, 6));
         redS.setText(Zahl.kurz(par.redStrecke, 6));
         mitR.setText(Zahl.kurz(par.mitRichtung, 6));
@@ -666,8 +685,7 @@ public final class Gui {
         reduktion.setText(e.dateien.get("JAGRED" + zusatz + ".OutR"));
         vereinigung.setText(e.dateien.get("JAGMIT" + zusatz + ".OutM"));
         anzahl.setText(e.dateien.get("JAGNET" + zusatz + ".OutN"));
-        String beob = par.art == Parameter.Ausgleichungsart.D1 ? Ausgabe.hoehenmessungName()
-                : Ausgabe.lagemessungName(par);
+        String beob = Ausgabe.beobachtungenName(par);
         beobachtungen.setText(beob + "\n\n" + e.dateien.get(beob));
         StringBuilder sb = new StringBuilder();
         sb.append(Ausgabe.festpunkteName(par)).append("\n").append(e.dateien.get(Ausgabe.festpunkteName(par)));

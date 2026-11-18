@@ -161,6 +161,11 @@ public final class Auswertung {
         e.dateien.put("JAGMIT" + zusatz + ".OutM", Ausgabe.protokollVereinigung(e.vereinigung, par, e.daten));
         if (par.art == Parameter.Ausgleichungsart.D1) {
             e.dateien.put(Ausgabe.hoehenmessungName(), Ausgabe.hoehenmessung(e.vereinigung, e.daten.format, sl));
+        } else if (par.art.original()) {
+            if (e.daten.format.istNivellement()) {
+                throw new IOException("Originalbeobachtungen (Satzart 20.) gibt es nur für NEPTAN-Beobachtungsdateien.");
+            }
+            e.dateien.put(Ausgabe.originalmessungName(par), Ausgabe.originalmessung(e.vereinigung, sl));
         } else {
             e.dateien.put(Ausgabe.lagemessungName(par), Ausgabe.lagemessung(e.vereinigung, par, sl));
         }

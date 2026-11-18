@@ -19,7 +19,7 @@ public class Parameter {
 
     /** Ausgleichungsart für die Ausgabe. */
     public enum Ausgleichungsart {
-        D1("1D_(Höhe)"), D2("2D_(Lage)"), D3("3D_(Lage&Höhe)");
+        D1("1D_(Höhe)"), D2("2D_(Lage)"), D3("3D_(Lage&Höhe)"), D3O("3D_(Originalbeobachtungen)");
 
         public final String text;
 
@@ -29,7 +29,12 @@ public class Parameter {
 
         @Override
         public String toString() {
-            return text;
+            return this == D3O ? "3D_(Originalbeobachtungen, Satzart 20.)" : text;
+        }
+
+        /** Ausgabe als gemittelte Originalbeobachtungen (Schrägstrecke, Richtung, Zenitwinkel). */
+        public boolean original() {
+            return this == D3O;
         }
     }
 
@@ -52,11 +57,17 @@ public class Parameter {
     public double redHoehe = 0.100;
     public double redHoeheNiv = 0.00005;
     public boolean zielachsfehlerAnbringen = false;
+    /** Grenzwert Zenitwinkel (nur Ausgabe Originalbeobachtungen). */
+    public double redZenit = 0.0050;
 
     // Standpunktvereinigung
     public double mitRichtung = 0.0035;
     public double mitStrecke = 0.003;
     public double mitHoehe = 0.100;
+    /** Grenzwert Zenitwinkel bei der Standpunktvereinigung (nur Originalbeobachtungen). */
+    public double mitZenit = 0.0050;
+    /** Höchstzulässiger Unterschied der Instrumentenhöhen für die Vereinigung von Originalbeobachtungen. */
+    public static final double IH_TOLERANZ = 0.0005;
 
     // Neupunktkoordinaten bei 1D (leer = automatisch größter Rechts-/Hochwert + 100 m)
     public double neupunktY = Double.NaN;
@@ -91,6 +102,8 @@ public class Parameter {
         p.setProperty("redHoehe", Double.toString(redHoehe));
         p.setProperty("redHoeheNiv", Double.toString(redHoeheNiv));
         p.setProperty("zielachsfehlerAnbringen", Boolean.toString(zielachsfehlerAnbringen));
+        p.setProperty("redZenit", Double.toString(redZenit));
+        p.setProperty("mitZenit", Double.toString(mitZenit));
         p.setProperty("mitRichtung", Double.toString(mitRichtung));
         p.setProperty("mitStrecke", Double.toString(mitStrecke));
         p.setProperty("mitHoehe", Double.toString(mitHoehe));
@@ -132,6 +145,8 @@ public class Parameter {
         redHoehe = zahl(p.getProperty("redHoehe"), redHoehe);
         redHoeheNiv = zahl(p.getProperty("redHoeheNiv"), redHoeheNiv);
         zielachsfehlerAnbringen = Boolean.parseBoolean(p.getProperty("zielachsfehlerAnbringen", "false"));
+        redZenit = zahl(p.getProperty("redZenit"), redZenit);
+        mitZenit = zahl(p.getProperty("mitZenit"), mitZenit);
         mitRichtung = zahl(p.getProperty("mitRichtung"), mitRichtung);
         mitStrecke = zahl(p.getProperty("mitStrecke"), mitStrecke);
         mitHoehe = zahl(p.getProperty("mitHoehe"), mitHoehe);

@@ -20,6 +20,8 @@ import java.util.Map;
  * solange die Abweichung den Grenzwert erreicht oder überschreitet.</li>
  * <li>Mittel der verbleibenden Werte.</li>
  * </ol>
+ * Bei der Ausgabe als Originalbeobachtungen werden zusätzlich Schrägstrecke und Zenitwinkel
+ * (Lage II als 400 − z) gemittelt, getrennt je Reflektorhöhe.
  */
 public final class Reduktion {
 
@@ -30,12 +32,19 @@ public final class Reduktion {
         public double richtung = Double.NaN;
         public double strecke = Double.NaN;
         public double hoehe = Double.NaN;
+        /** Zenitwinkel auf Lage I umgerechnet [gon] und Schrägstrecke [m] (Originalbeobachtungen). */
+        public double zenit = Double.NaN;
+        public double schraeg = Double.NaN;
         public boolean richtungElim;
         public boolean streckeElim;
         public boolean hoeheElim;
+        public boolean zenitElim;
+        public boolean schraegElim;
         public double vRichtung = Double.NaN;
         public double vStrecke = Double.NaN;
         public double vHoehe = Double.NaN;
+        public double vZenit = Double.NaN;
+        public double vSchraeg = Double.NaN;
         public String hinweis = "";
         public String datei = "";
         public int zeile;
@@ -48,9 +57,15 @@ public final class Reduktion {
         public double richtung = Double.NaN;
         public double strecke = Double.NaN;
         public double hoehe = Double.NaN;
+        public double zenit = Double.NaN;
+        public double schraeg = Double.NaN;
+        /** Reflektorhöhe der Messungen dieses Zieles (Originalbeobachtungen). */
+        public double reflektorhoehe = Double.NaN;
         public int nRichtung;
         public int nStrecke;
         public int nHoehe;
+        public int nZenit;
+        public int nSchraeg;
         public int nGesamt;
         /** Angebrachter Zielachsfehler c [gon], NaN wenn nicht bestimmt. */
         public double zielachsfehler = Double.NaN;
@@ -61,6 +76,8 @@ public final class Reduktion {
     public static class Standpunkt {
         public String name;
         public double instrumentenhoehe;
+        /** Höhenindexfehler aus Lage I und II [gon] (nur Originalbeobachtungen), sonst NaN. */
+        public double hoehenindex = Double.NaN;
         public final List<Ziel> ziele = new ArrayList<>();
     }
 
@@ -83,6 +100,7 @@ public final class Reduktion {
         double tolR = par.redRichtung;
         double tolS = par.redStrecke;
         double tolH = par.redHoeheWirksam();
+        boolean original = par.art.original() && !niv;
         List<Standpunkt> ergebnis = new ArrayList<>();
         int zielNr = 1;
         for (Messdaten.Standpunkt sp : daten.standpunkte) {
@@ -92,11 +110,15 @@ public final class Reduktion {
             rs.instrumentenhoehe = ih;
             Map<String, Ziel> ziele = new LinkedHashMap<>();
             for (Messdaten.Beobachtung b : sp.beobachtungen) {
-                Ziel z = ziele.get(b.ziel);
+                // Originalbeobachtungen: je Ziel und Reflektorhöhe getrennt mitteln
+                double th0 = Double.isNaN(b.reflektorhoehe) ? 0.0 : b.reflektorhoehe;
+                String schluessel = original ? b.ziel + "\u0000" + Zahl.fmt(th0, 3) : b.ziel;
+                Ziel z = ziele.get(schluessel);
                 if (z == null) {
                     z = new Ziel();
                     z.name = b.ziel;
-                    ziele.put(b.ziel, z);
+                    z.reflektorhoehe = th0;
+                    ziele.put(schluessel, z);
                 }
                 Einzelwert e = new Einzelwert();
                 e.nr = z.einzelwerte.size() + 1;
@@ -115,6 +137,10 @@ public final class Reduktion {
                         }
                         e.richtung = Zahl.runden(r, sr);
                     }
+                    if (!Double.isNaN(b.zenit)) {
+                        e.zenit = Zahl.runden(e.lage2 ? 400.0 - b.zenit : b.zenit, sr);
+                    }
+                    e.schraeg = Zahl.runden(b.strecke, sl);
                     if (!Double.isNaN(b.strecke)) {
                         if (!Double.isNaN(b.zenit)) {
                             double zr = b.zenit * Math.PI / 200.0;
@@ -129,14 +155,74 @@ public final class Reduktion {
                 }
                 z.einzelwerte.add(e);
             }
+            if (original) {
+                rs.hoehenindex = hoehenindexAnbringen(ziele.values(), sr);
+            }
             for (Ziel z : ziele.values()) {
                 z.nr = zielNr++;
                 mitteln(z, niv, tolR, tolS, tolH, sr, sl, par.zielachsfehlerAnbringen);
+                if (original) {
+                    z.zenit = element(z.einzelwerte, 3, par.redZenit, sr);
+                    z.schraeg = element(z.einzelwerte, 4, tolS, sl);
+                    for (Einzelwert e : z.einzelwerte) {
+                        if (!Double.isNaN(e.zenit) && !e.zenitElim) {
+                            z.nZenit++;
+                        }
+                        if (!Double.isNaN(e.schraeg) && !e.schraegElim) {
+                            z.nSchraeg++;
+                        }
+                    }
+                }
                 rs.ziele.add(z);
             }
             ergebnis.add(rs);
         }
         return ergebnis;
+    }
+
+    /**
+     * Höhenindexfehler des Standpunktes: Mittel von (z_I − (400 − z_II)) / 2 über alle Ziele, die in
+     * beiden Lagen gemessen sind. Die Zenitwinkel werden damit verbessert (Lage I − i, Lage II + i),
+     * bevor auf Grenzwertüberschreitung geprüft wird. Sonst würde bei einem Indexfehler in der
+     * Größenordnung des Grenzwertes eine ganze Lage eliminiert und der Mittelwert verfälscht.
+     */
+    private static double hoehenindexAnbringen(java.util.Collection<Ziel> ziele, int sr) {
+        double summe = 0;
+        int n = 0;
+        for (Ziel z : ziele) {
+            double s1 = 0;
+            double s2 = 0;
+            int n1 = 0;
+            int n2 = 0;
+            for (Einzelwert e : z.einzelwerte) {
+                if (Double.isNaN(e.zenit)) {
+                    continue;
+                }
+                if (e.lage2) {
+                    s2 += e.zenit;
+                    n2++;
+                } else {
+                    s1 += e.zenit;
+                    n1++;
+                }
+            }
+            if (n1 > 0 && n2 > 0) {
+                summe += (s1 / n1 - s2 / n2) / 2.0;
+                n++;
+            }
+        }
+        if (n == 0) {
+            return Double.NaN;
+        }
+        double i = summe / n;
+        for (Ziel z : ziele) {
+            for (Einzelwert e : z.einzelwerte) {
+                if (!Double.isNaN(e.zenit)) {
+                    e.zenit = Zahl.runden(e.lage2 ? e.zenit + i : e.zenit - i, sr);
+                }
+            }
+        }
+        return i;
     }
 
     private static void mitteln(Ziel z, boolean niv, double tolR, double tolS, double tolH, int sr, int sl,
@@ -214,30 +300,70 @@ public final class Reduktion {
     }
 
     private static double wert(Einzelwert e, int k) {
-        return k == 0 ? e.richtung : k == 1 ? e.strecke : e.hoehe;
+        switch (k) {
+            case 0:
+                return e.richtung;
+            case 1:
+                return e.strecke;
+            case 2:
+                return e.hoehe;
+            case 3:
+                return e.zenit;
+            default:
+                return e.schraeg;
+        }
     }
 
     private static boolean elim(Einzelwert e, int k) {
-        return k == 0 ? e.richtungElim : k == 1 ? e.streckeElim : e.hoeheElim;
+        switch (k) {
+            case 0:
+                return e.richtungElim;
+            case 1:
+                return e.streckeElim;
+            case 2:
+                return e.hoeheElim;
+            case 3:
+                return e.zenitElim;
+            default:
+                return e.schraegElim;
+        }
     }
 
     private static void setzeElim(Einzelwert e, int k) {
-        if (k == 0) {
-            e.richtungElim = true;
-        } else if (k == 1) {
-            e.streckeElim = true;
-        } else {
-            e.hoeheElim = true;
+        switch (k) {
+            case 0:
+                e.richtungElim = true;
+                break;
+            case 1:
+                e.streckeElim = true;
+                break;
+            case 2:
+                e.hoeheElim = true;
+                break;
+            case 3:
+                e.zenitElim = true;
+                break;
+            default:
+                e.schraegElim = true;
         }
     }
 
     private static void setzeV(Einzelwert e, int k, double v) {
-        if (k == 0) {
-            e.vRichtung = v;
-        } else if (k == 1) {
-            e.vStrecke = v;
-        } else {
-            e.vHoehe = v;
+        switch (k) {
+            case 0:
+                e.vRichtung = v;
+                break;
+            case 1:
+                e.vStrecke = v;
+                break;
+            case 2:
+                e.vHoehe = v;
+                break;
+            case 3:
+                e.vZenit = v;
+                break;
+            default:
+                e.vSchraeg = v;
         }
     }
 

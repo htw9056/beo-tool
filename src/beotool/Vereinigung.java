@@ -16,7 +16,9 @@ import java.util.List;
  * fehlender Wert wird nicht mit 0 gemittelt.</li>
  * <li>Übrige Ziele der weiteren Aufstellung werden mit Richtung + OU übernommen.</li>
  * </ol>
- * Ohne gemeinsame Ziele bleiben die Standpunkte getrennt.
+ * Ohne gemeinsame Ziele bleiben die Standpunkte getrennt. Bei Originalbeobachtungen werden nur
+ * Aufstellungen mit gleicher Instrumentenhöhe vereinigt und nur Ziele mit gleicher Reflektorhöhe
+ * gemittelt; zusätzlich werden Zenitwinkel und Schrägstrecke gemittelt.
  */
 public final class Vereinigung {
 
@@ -32,6 +34,14 @@ public final class Vereinigung {
         public String vRichtung = "";
         public String dStrecke = "";
         public String dHoehe = "";
+        /** Originalbeobachtungen: Zenitwinkel, Schrägstrecke, Reflektorhöhe und Differenzen. */
+        public double zenit = Double.NaN;
+        public double schraeg = Double.NaN;
+        public double reflektorhoehe = Double.NaN;
+        public String dZenit = "";
+        public String dSchraeg = "";
+        public int nZenit;
+        public int nSchraeg;
         public int nRichtung;
         public int nStrecke;
         public int nHoehe;
@@ -42,6 +52,8 @@ public final class Vereinigung {
         int aufstR = 1;
         int aufstS = 1;
         int aufstH = 1;
+        int aufstZ = 1;
+        int aufstSchr = 1;
     }
 
     /** Standpunkt nach der Vereinigung. */
@@ -60,9 +72,18 @@ public final class Vereinigung {
     private Vereinigung() {
     }
 
+    /** Gleiches Ziel: gleiche Punktnummer, bei Originalbeobachtungen auch gleiche Reflektorhöhe. */
+    private static boolean gleich(Ziel a, Ziel b, boolean original) {
+        if (!a.name.equals(b.name)) {
+            return false;
+        }
+        return !original || Math.abs(a.reflektorhoehe - b.reflektorhoehe) <= Parameter.IH_TOLERANZ;
+    }
+
     public static List<Standpunkt> rechnen(List<Reduktion.Standpunkt> red, Parameter par, int sl,
             List<String> hinweise) {
         int sr = Reduktion.stellenRichtung();
+        boolean original = par.art.original() && sl == 4;
         List<Standpunkt> liste = new ArrayList<>();
         for (Reduktion.Standpunkt rs : red) {
             Standpunkt s = new Standpunkt();
@@ -79,6 +100,11 @@ public final class Vereinigung {
                 z.nStrecke = rz.nStrecke;
                 z.nHoehe = rz.nHoehe;
                 z.nGesamt = rz.nGesamt;
+                z.zenit = rz.zenit;
+                z.schraeg = rz.schraeg;
+                z.reflektorhoehe = rz.reflektorhoehe;
+                z.nZenit = rz.nZenit;
+                z.nSchraeg = rz.nSchraeg;
                 s.ziele.add(z);
             }
             liste.add(s);
@@ -92,6 +118,13 @@ public final class Vereinigung {
                 if (!st2.name.equals(st1.name)) {
                     continue;
                 }
+                if (original && Math.abs(st1.instrumentenhoehe - st2.instrumentenhoehe) > Parameter.IH_TOLERANZ) {
+                    st2.hinweis = "andere Instrumentenhöhe, bleibt getrennt";
+                    hinweise.add("Standpunktvereinigung: Standpunkt " + st2.name + " mit Instrumentenhöhe "
+                            + Zahl.fmt(st2.instrumentenhoehe, 3) + " m statt " + Zahl.fmt(st1.instrumentenhoehe, 3)
+                            + " m bleibt bei Originalbeobachtungen getrennt (eigene Orientierung in Jag3D).");
+                    continue;
+                }
                 zaehler++;
                 String marke = zaehler + "*** ";
 
@@ -102,7 +135,7 @@ public final class Vereinigung {
                         continue;
                     }
                     for (Ziel b : st2.ziele) {
-                        if (b.name.equals(a.name) && !Double.isNaN(b.richtung)) {
+                        if (gleich(a, b, original) && !Double.isNaN(b.richtung)) {
                             paare.add(new Ziel[] {a, b});
                         }
                     }
@@ -156,7 +189,7 @@ public final class Vereinigung {
                     }
                     Ziel b = null;
                     for (Ziel c : uebrig) {
-                        if (c.name.equals(a.name)) {
+                        if (gleich(a, c, original)) {
                             b = c;
                             break;
                         }
@@ -205,6 +238,34 @@ public final class Vereinigung {
                     }
                     a.nHoehe += b.nHoehe;
                     a.nGesamt += b.nGesamt;
+                    if (original) {
+                        if (Double.isNaN(a.zenit) || Double.isNaN(b.zenit)) {
+                            a.dZenit = "k.A.";
+                            if (Double.isNaN(a.zenit)) {
+                                a.zenit = b.zenit;
+                                a.aufstZ = 1;
+                            }
+                        } else {
+                            double diff = Zahl.runden(a.zenit - b.zenit, sr - 1);
+                            a.dZenit = (Math.abs(diff) > par.mitZenit ? marke : "") + Zahl.formatKomma(diff);
+                            a.zenit = Zahl.runden((a.zenit * a.aufstZ + b.zenit) / (a.aufstZ + 1), sr);
+                            a.aufstZ++;
+                        }
+                        if (Double.isNaN(a.schraeg) || Double.isNaN(b.schraeg)) {
+                            a.dSchraeg = "k.A.";
+                            if (Double.isNaN(a.schraeg)) {
+                                a.schraeg = b.schraeg;
+                                a.aufstSchr = 1;
+                            }
+                        } else {
+                            double diff = Zahl.runden(a.schraeg - b.schraeg, 4);
+                            a.dSchraeg = (Math.abs(diff) > par.mitStrecke ? marke : "") + Zahl.formatKomma(diff);
+                            a.schraeg = Zahl.runden((a.schraeg * a.aufstSchr + b.schraeg) / (a.aufstSchr + 1), sl);
+                            a.aufstSchr++;
+                        }
+                        a.nZenit += b.nZenit;
+                        a.nSchraeg += b.nSchraeg;
+                    }
                     uebrig.remove(b);
                 }
 

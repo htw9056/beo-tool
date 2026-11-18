@@ -22,6 +22,9 @@ Eine Java-Installation ist nicht nötig, die Java-Laufzeit ist im Paket enthalte
 - **Standpunktvereinigung:** gleichnamige Standpunkte über gemeinsame Ziele mit
   Orientierungsunterschied zusammenfassen, gewichtet nach Anzahl der Aufstellungen
 - **Anzahl der Anzielungen:** unkontrollierte (nur einmal angezielte) Punkte erkennen
+- **3D-Originalbeobachtungen (ab V1.00):** wahlweise gemittelte Schrägstrecke, Richtung und
+  Zenitwinkel als Satzart `20.` mit Instrumenten- und Reflektorhöhe; Höhenindexfehler aus Lage I/II
+  wird angebracht, Grenzwert Zenitwinkel 0.0050 gon
 - **Ausgabe:** reduzierte Beobachtungen für Jag3D (`*.BEO` bzw. `Höhenmessung.NIV`),
   Fest-, Neu- und nicht verwendete Festpunkte, Protokolle
 - Oberfläche und Aufruf in der Eingabeaufforderung (`beo-tool-konsole.exe`)
