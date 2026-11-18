@@ -6,6 +6,11 @@ mit Ausgabe für die Netzausgleichung mit **Jag3D** (1D, 2D, 3D).
 
 © Dipl.-Ing. (FH) Stefan Klein · MIT-Lizenz
 
+[![beo-tool V1.00 – Reduktion mit 3D-Originalbeobachtungen](docs/beo-tool_V1.00.png)](docs/beo-tool_V1.00.png)
+
+*beo-tool V1.00 mit dem Beispielnetz: Reduktion als 3D-Originalbeobachtungen mit Höhenindexfehler je
+Standpunkt (Bild anklicken für volle Auflösung 5120 × 2880).*
+
 ## Download (Windows)
 
 Unter [Releases](https://github.com/htw9056/beo-tool/releases) die Datei
