@@ -37,6 +37,13 @@ Eine Java-Installation ist nicht nötig, die Java-Laufzeit ist im Paket enthalte
 
 Ausführliche Beschreibung: [Handbuch](src/beotool/hilfe/hilfe.html) (im Programm mit F1).
 
+## Video-Anleitung
+
+[**beo-tool_Anleitung.mp4**](docs/beo-tool_Anleitung.mp4) (4:26 min, ohne Ton, mit Untertiteln):
+Schritt für Schritt vom Export im Feld bis zu den Dateien für Jag3D, Eliminieren fehlerhafter
+Richtungen in der Rohdatei und warum das nötig ist, die Übersicht der größten Verbesserungen und die
+Option 3D-Originalbeobachtungen (Satzart 20.). Das Video liegt auch jedem Release bei.
+
 ## Exportvorlagen für die Feldrechner
 
 Im Ordner [`vorlagen`](vorlagen) liegen Vorlagen, mit denen die Feldrechner die Messungen direkt als
